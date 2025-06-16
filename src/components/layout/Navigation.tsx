@@ -1,97 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { ConnectWallet, useWallet } from '@/components/web3/ConnectWallet';
-import { Badge } from '@/components/ui/badge';
+import { usePathname } from 'next/navigation';
+import { ConnectWallet } from '@/components/web3/ConnectWallet';
 
 export function Navigation() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isConnected, mounted } = useWallet();
+  const pathname = usePathname();
+
+  const navItems = [
+    { name: '首页', href: '/', icon: '🏠' },
+    { name: '创作', href: '/mint', icon: '🎨' },
+    { name: '我的图鉴', href: '/gallery', icon: '📚' },
+    { name: '探索', href: '/explore', icon: '🌐' },
+    { name: '代币', href: '/token', icon: '🪙' },
+  ];
 
   return (
-    <nav className="relative z-20 border-b border-white/10 bg-black/20 backdrop-blur-sm">
+    <nav className="bg-black/20 backdrop-blur-sm border-b border-white/10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">神</span>
-            </div>
-            <span className="text-white font-bold text-xl">神图计划</span>
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-              Beta
-            </Badge>
+            <span className="text-2xl">🎨</span>
+            <span className="text-xl font-bold text-white">神图计划</span>
           </Link>
 
-          {/* Desktop Menu */}
+          {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-white/80 hover:text-white transition-colors">
-              首页
-            </Link>
-            <Link href="/mint" className="text-white/80 hover:text-white transition-colors flex items-center gap-1">
-              <span className="text-lg">🎨</span>
-              创造神兽
-            </Link>
-            <Link href="/gallery" className="text-white/80 hover:text-white transition-colors flex items-center gap-1">
-              <span className="text-lg">📚</span>
-              神兽图鉴
-            </Link>
-            <Link href="/marketplace" className="text-white/80 hover:text-white transition-colors flex items-center gap-1">
-              <span className="text-lg">🛒</span>
-              交易市场
-            </Link>
-            <Link href="/tokens" className="text-white/80 hover:text-white transition-colors flex items-center gap-1">
-              <span className="text-lg">🪙</span>
-              代币中心
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === item.href
+                    ? 'bg-purple-500/20 text-purple-400'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <span>{item.icon}</span>
+                <span>{item.name}</span>
+              </Link>
+            ))}
           </div>
 
-          {/* Connect Button */}
-          <div className="hidden md:flex items-center space-x-4">
-            {mounted && isConnected && (
-              <div className="flex items-center gap-2 text-sm text-white/70">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>已连接</span>
-              </div>
-            )}
-            <ConnectWallet />
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* Wallet Connection */}
+          <ConnectWallet />
         </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-2">
-            <Link href="/" className="block text-white/80 hover:text-white py-2">
-              🏠 首页
-            </Link>
-            <Link href="/mint" className="block text-white/80 hover:text-white py-2">
-              🎨 创造神兽
-            </Link>
-            <Link href="/gallery" className="block text-white/80 hover:text-white py-2">
-              📚 神兽图鉴
-            </Link>
-            <Link href="/marketplace" className="block text-white/80 hover:text-white py-2">
-              🛒 交易市场
-            </Link>
-            <Link href="/tokens" className="block text-white/80 hover:text-white py-2">
-              🪙 代币中心
-            </Link>
-            <div className="pt-4">
-              <ConnectWallet />
-            </div>
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <div className="flex justify-around py-3 border-t border-white/10">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+                  pathname === item.href
+                    ? 'text-purple-400'
+                    : 'text-white/70'
+                }`}
+              >
+                <span className="text-xl">{item.icon}</span>
+                <span className="text-xs">{item.name}</span>
+              </Link>
+            ))}
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );

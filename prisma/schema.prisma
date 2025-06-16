@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+model NFT {
+  id                String   @id @default(cuid())
+  tokenId           BigInt   @unique
+  name              String
+  originalInput     String
+  optimizedPrompt   String
+  style             String
+  creator           String
+  imageUrl          String
+  ipfsImageUrl      String?
+  ipfsMetadataUrl   String?
+  gatewayImageUrl   String?
+  rarity            Int
+  rarityRevealed    Boolean  @default(false)
+  vrfRequestId      String?
+  mintedAt          DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("nfts")
+}
+
+model VRFRequest {
+  id          String   @id @default(cuid())
+  requestId   String   @unique
+  status      String
+  randomWord  Int?
+  rarity      Int?
+  tokenId     BigInt?
+  requester   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("vrf_requests")
+}
