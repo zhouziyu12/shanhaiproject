@@ -1,14 +1,26 @@
+'use client';
+
+import { useEffect } from 'react';
 import { NFTGallery } from '@/components/features/gallery/NFTGallery';
 
-export const metadata = {
-  title: '神兽图鉴 - 神图计划 ShanHaiVerse',
-  description: '查看和管理你的山海经神兽NFT收藏，浏览稀有度分布和详细信息',
-};
-
 export default function GalleryPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <NFTGallery />
-    </div>
-  );
+  // 监听NFT添加事件
+  useEffect(() => {
+    const handleNFTAdded = (event: CustomEvent) => {
+      console.log('🎉 图鉴页面收到NFT添加事件:', event.detail);
+      // 可以在这里添加通知或者强制刷新
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('nftMintedAndAddedToGallery', handleNFTAdded as EventListener);
+      return () => {
+        window.removeEventListener('nftMintedAndAddedToGallery', handleNFTAdded as EventListener);
+      };
+    }
+  }, []);
+
+  return <NFTGallery />;
 }

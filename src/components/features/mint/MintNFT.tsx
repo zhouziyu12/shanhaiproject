@@ -26,6 +26,16 @@ interface MintSuccessResult {
   metadata: any;
   generationData: GenerationResult;
   estimatedRevealTime: number;
+  mintData: {
+    originalInput: string;
+    optimizedPrompt: string;
+    style: string;
+    creator: string;
+    imageUrl: string;
+    ipfsImageUrl: string;
+    ipfsMetadataUrl: string;
+    gatewayImageUrl: string;
+  };
 }
 
 export function MintNFT() {
@@ -34,6 +44,15 @@ export function MintNFT() {
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
   const [mintResult, setMintResult] = useState<MintSuccessResult | null>(null);
   const [finalRarity, setFinalRarity] = useState<RarityLevel | null>(null);
+
+  // 调试输出当前状态
+  console.log('🎯 MintNFT组件状态:', {
+    currentStep,
+    hasGeneration: !!generationResult,
+    hasMintResult: !!mintResult,
+    tokenId: mintResult?.tokenId,
+    vrfRequestId: mintResult?.vrfRequestId
+  });
 
   if (!mounted) {
     return (
@@ -57,16 +76,19 @@ export function MintNFT() {
   }
 
   const handleImageGenerated = (result: GenerationResult) => {
+    console.log('🎨 图片生成完成:', result);
     setGenerationResult(result);
     setCurrentStep('confirm');
   };
 
   const handleMintSuccess = (result: MintSuccessResult) => {
+    console.log('⛏️ 铸造成功，准备跳转到稀有度揭晓:', result);
     setMintResult(result);
     setCurrentStep('reveal');
   };
 
   const handleRarityReveal = (rarity: RarityLevel) => {
+    console.log('⭐ 稀有度揭晓完成:', rarity);
     setFinalRarity(rarity);
     setCurrentStep('success');
   };
@@ -129,6 +151,19 @@ export function MintNFT() {
         </div>
       </div>
 
+      {/* 调试信息显示 */}
+      <div className="max-w-5xl mx-auto mb-4">
+        <div className="bg-black/30 border border-white/20 rounded-lg p-3">
+          <div className="text-xs text-white/70 space-y-1">
+            <div>🐛 当前步骤: {currentStep}</div>
+            <div>🎨 生成结果: {generationResult ? '✓' : '✗'}</div>
+            <div>⛏️ 铸造结果: {mintResult ? `✓ Token ID: ${mintResult.tokenId}` : '✗'}</div>
+            <div>🎲 VRF请求: {mintResult?.vrfRequestId || '无'}</div>
+            <div>⭐ 最终稀有度: {finalRarity !== null ? finalRarity : '未揭晓'}</div>
+          </div>
+        </div>
+      </div>
+
       {/* 步骤内容 */}
       {currentStep === 'create' && (
         <AICreationWorkshop onImageGenerated={handleImageGenerated} />
@@ -143,12 +178,19 @@ export function MintNFT() {
       )}
 
       {currentStep === 'reveal' && mintResult && (
-        <RarityReveal
-          tokenId={mintResult.tokenId}
-          vrfRequestId={mintResult.vrfRequestId}
-          onRevealComplete={handleRarityReveal}
-          onBack={handleBackToConfirm}
-        />
+        <div>
+          <div className="text-center mb-4">
+            <div className="text-green-400 font-bold">🎯 RarityReveal组件即将渲染</div>
+            <div className="text-white/70 text-sm">Token ID: {mintResult.tokenId}, VRF: {mintResult.vrfRequestId}</div>
+          </div>
+          <RarityReveal
+            tokenId={mintResult.tokenId}
+            vrfRequestId={mintResult.vrfRequestId}
+            mintData={mintResult.mintData}
+            onRevealComplete={handleRarityReveal}
+            onBack={handleBackToConfirm}
+          />
+        </div>
       )}
 
       {currentStep === 'success' && mintResult && finalRarity !== null && (
@@ -208,6 +250,14 @@ export function MintNFT() {
                     <div className="text-green-300">🆔 Token ID：#{mintResult.tokenId}</div>
                     <div className="text-green-300">⭐ 稀有度：{finalRarity}</div>
                   </div>
+                </div>
+              </div>
+
+              {/* 图鉴提示 */}
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 max-w-2xl mx-auto">
+                <div className="text-purple-400 text-sm font-medium mb-2">📚 图鉴更新</div>
+                <div className="text-purple-300/80 text-sm">
+                  您的神兽应该已经自动添加到图鉴中了，快去查看您的收藏吧！
                 </div>
               </div>
             </div>

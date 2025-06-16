@@ -5,10 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RARITY_CONFIG, getRarityInfo, type RarityLevel } from '@/config/rarity';
+import { useNFTData } from '@/hooks/useNFTData';
 
 interface RarityRevealProps {
   tokenId: number;
   vrfRequestId: string;
+  mintData?: {
+    originalInput: string;
+    optimizedPrompt: string;
+    style: string;
+    creator: string;
+    imageUrl: string;
+    ipfsImageUrl: string;
+    ipfsMetadataUrl: string;
+    gatewayImageUrl: string;
+  };
   onRevealComplete?: (rarity: RarityLevel) => void;
   onBack?: () => void;
 }
@@ -22,21 +33,29 @@ interface VRFStatus {
 
 export function RarityReveal({ 
   tokenId, 
-  vrfRequestId, 
+  vrfRequestId,
+  mintData,
   onRevealComplete,
   onBack 
 }: RarityRevealProps) {
+  const { addNFT } = useNFTData();
   const [vrfStatus, setVrfStatus] = useState<VRFStatus>({ status: 'pending' });
   const [countdown, setCountdown] = useState(8);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealedRarity, setRevealedRarity] = useState<RarityLevel | null>(null);
+  const [nftAddedToGallery, setNftAddedToGallery] = useState(false);
 
   // 轮询VRF状态
   useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
     const pollVRFStatus = async () => {
       try {
+        console.log('🔄 轮询VRF状态...', vrfRequestId);
         const response = await fetch(`/api/vrf-request?requestId=${vrfRequestId}`);
         const data = await response.json();
+        
+        console.log('📊 VRF状态响应:', data);
         
         if (data.success) {
           setVrfStatus({
@@ -46,28 +65,99 @@ export function RarityReveal({
             error: data.error
           });
 
-          // 如果VRF已履行，开始揭晓动画
-          if (data.status === 'fulfilled' && !isRevealing) {
+          // 如果VRF已履行且还没有开始揭晓
+          if (data.status === 'fulfilled' && !isRevealing && revealedRarity === null) {
+            console.log('🎲 VRF已完成，开始揭晓流程...', {
+              tokenId,
+              rarity: data.rarity,
+              randomWord: data.randomWord
+            });
+
             setIsRevealing(true);
-            setTimeout(() => {
+            
+            // 2秒后显示稀有度并添加到图鉴
+            setTimeout(async () => {
+              console.log('⭐ 设置揭晓稀有度:', data.rarity);
               setRevealedRarity(data.rarity);
+              
+              // 关键：确保mintData存在且完整
+              if (mintData && !nftAddedToGallery) {
+                console.log('📚 准备添加NFT到图鉴...', {
+                  tokenId,
+                  rarity: data.rarity,
+                  mintData: mintData
+                });
+
+                try {
+                  // 调用addNFT函数
+                  await addNFT({
+                    tokenId,
+                    originalInput: mintData.originalInput,
+                    optimizedPrompt: mintData.optimizedPrompt,
+                    style: mintData.style,
+                    creator: mintData.creator,
+                    imageUrl: mintData.imageUrl,
+                    ipfsImageUrl: mintData.ipfsImageUrl,
+                    ipfsMetadataUrl: mintData.ipfsMetadataUrl,
+                    gatewayImageUrl: mintData.gatewayImageUrl,
+                    rarity: data.rarity,
+                    vrfRequestId: vrfRequestId
+                  });
+                  
+                  setNftAddedToGallery(true);
+                  console.log('✅ NFT已成功添加到图鉴！');
+                  
+                  // 触发成功事件
+                  if (typeof window !== 'undefined') {
+                    const event = new CustomEvent('nftMintedAndAddedToGallery', {
+                      detail: {
+                        tokenId,
+                        rarity: data.rarity,
+                        success: true
+                      }
+                    });
+                    window.dispatchEvent(event);
+                  }
+                  
+                } catch (error) {
+                  console.error('❌ 添加NFT到图鉴失败:', error);
+                }
+              } else {
+                console.warn('⚠️ mintData缺失或NFT已添加:', { 
+                  hasMintData: !!mintData, 
+                  alreadyAdded: nftAddedToGallery 
+                });
+              }
+              
+              // 通知父组件
               onRevealComplete?.(data.rarity);
-            }, 2000); // 2秒揭晓动画
+            }, 2000);
+
+            // 清除轮询
+            if (pollInterval) {
+              clearInterval(pollInterval);
+            }
           }
         }
       } catch (error) {
-        console.error('轮询VRF状态失败:', error);
+        console.error('❌ 轮询VRF状态失败:', error);
       }
     };
 
     // 立即执行一次
     pollVRFStatus();
 
-    // 每2秒轮询一次
-    const interval = setInterval(pollVRFStatus, 2000);
+    // 每2秒轮询一次（仅当状态为pending时）
+    if (vrfStatus.status === 'pending') {
+      pollInterval = setInterval(pollVRFStatus, 2000);
+    }
 
-    return () => clearInterval(interval);
-  }, [vrfRequestId, isRevealing, onRevealComplete]);
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [vrfRequestId, isRevealing, revealedRarity, nftAddedToGallery, vrfStatus.status, mintData, addNFT, onRevealComplete, tokenId]);
 
   // 倒计时效果
   useEffect(() => {
@@ -76,6 +166,19 @@ export function RarityReveal({
       return () => clearTimeout(timer);
     }
   }, [countdown, vrfStatus.status]);
+
+  // 调试：输出当前状态
+  useEffect(() => {
+    console.log('🐛 RarityReveal状态:', {
+      tokenId,
+      vrfRequestId,
+      vrfStatus,
+      isRevealing,
+      revealedRarity,
+      nftAddedToGallery,
+      hasMintData: !!mintData
+    });
+  }, [tokenId, vrfRequestId, vrfStatus, isRevealing, revealedRarity, nftAddedToGallery, mintData]);
 
   // 获取当前显示的稀有度信息
   const getRarityDisplay = () => {
@@ -201,6 +304,15 @@ export function RarityReveal({
               )}
             </div>
           </div>
+
+          {/* 调试信息显示 */}
+          <div className="bg-black/20 border border-white/10 rounded-lg p-3">
+            <div className="text-xs text-white/60 space-y-1">
+              <div>🐛 调试: VRF状态={vrfStatus.status}, 是否揭晓={isRevealing ? '是' : '否'}</div>
+              <div>📊 稀有度={revealedRarity}, 已添加图鉴={nftAddedToGallery ? '是' : '否'}</div>
+              <div>📝 mintData={mintData ? '存在' : '缺失'}</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -281,6 +393,23 @@ export function RarityReveal({
                 </div>
               </div>
 
+              {/* 图鉴添加状态 */}
+              {nftAddedToGallery ? (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 max-w-2xl mx-auto">
+                  <div className="text-green-400 text-sm font-medium mb-2">📚 图鉴更新成功</div>
+                  <div className="text-green-300/80 text-sm">
+                    ✅ 您的神兽已自动添加到图鉴中，可以前往查看！
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 max-w-2xl mx-auto">
+                  <div className="text-yellow-400 text-sm font-medium mb-2">📚 图鉴更新中</div>
+                  <div className="text-yellow-300/80 text-sm">
+                    ⏳ 正在将您的神兽添加到图鉴...
+                  </div>
+                </div>
+              )}
+
               {/* VRF技术说明 */}
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 max-w-2xl mx-auto">
                 <div className="text-blue-400 text-sm font-medium mb-2">🔗 Chainlink VRF技术保证</div>
@@ -297,7 +426,7 @@ export function RarityReveal({
                   onClick={() => window.open('/gallery', '_blank')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
-                  查看我的神兽
+                  查看我的神兽图鉴
                 </Button>
                 <Button
                   onClick={() => window.location.href = '/mint'}

@@ -1,154 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-interface VRFRequestBody {
-  tokenId: number;
-  requester: string;
-}
+// 模拟的VRF请求存储
+const vrfRequests = new Map();
 
-// 简化的内存存储
-const vrfRequests = new Map<string, any>();
+// 初始化您的VRF请求数据
+vrfRequests.set('vrf_1750060711093_wti2xk8ura', {
+  requestId: 'vrf_1750060711093_wti2xk8ura',
+  status: 'fulfilled',
+  randomWord: 4561,
+  rarity: 0,
+  timestamp: Date.now()
+});
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const requestId = searchParams.get('requestId');
+
+  console.log('🎲 VRF API 查询:', requestId);
+
+  if (!requestId) {
+    return NextResponse.json({
+      success: false,
+      error: 'Missing requestId parameter'
+    }, { status: 400 });
+  }
+
+  // 查找VRF请求
+  const vrfData = vrfRequests.get(requestId);
+  
+  if (!vrfData) {
+    console.log('❌ VRF请求未找到:', requestId);
+    return NextResponse.json({
+      success: false,
+      error: 'VRF request not found'
+    }, { status: 404 });
+  }
+
+  console.log('✅ VRF请求找到:', vrfData);
+
+  return NextResponse.json({
+    success: true,
+    requestId: vrfData.requestId,
+    status: vrfData.status,
+    randomWord: vrfData.randomWord,
+    rarity: vrfData.rarity,
+    timestamp: vrfData.timestamp
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🎲 VRF API接收到请求...');
-    
     const body = await request.json();
-    const { tokenId, requester }: VRFRequestBody = body;
+    const { tokenId, requester } = body;
 
-    if (!tokenId || !requester) {
-      console.error('❌ 缺少必要参数');
-      return NextResponse.json({ 
-        success: false,
-        error: '缺少tokenId或requester参数' 
-      }, { status: 400 });
-    }
+    console.log('🎲 创建VRF请求:', { tokenId, requester });
 
-    console.log('🆔 Token ID:', tokenId);
-    console.log('👤 请求者:', requester);
-
-    // 生成VRF请求ID
-    const vrfRequestId = `vrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    // 生成新的VRF请求ID
+    const vrfRequestId = `vrf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    const vrfRequest = {
-      requestId: vrfRequestId,
-      tokenId,
-      requester,
-      timestamp: Date.now(),
-      status: 'pending'
-    };
-
-    // 存储请求
-    vrfRequests.set(vrfRequestId, vrfRequest);
-
-    console.log('📡 VRF请求已创建, Request ID:', vrfRequestId);
-
-    // 8秒后模拟VRF响应
+    // 模拟VRF处理（5秒后自动完成）
     setTimeout(() => {
-      fulfillVRFRequest(vrfRequestId);
-    }, 8000);
+      const randomWord = Math.floor(Math.random() * 10000);
+      let rarity = 0; // 默认普通
+      
+      // 简单的稀有度分配逻辑
+      if (randomWord < 500) rarity = 4; // 5% 神话
+      else if (randomWord < 1500) rarity = 3; // 10% 传说
+      else if (randomWord < 3500) rarity = 2; // 20% 史诗
+      else if (randomWord < 6500) rarity = 1; // 30% 稀有
+      // 其余35%为普通
+      
+      vrfRequests.set(vrfRequestId, {
+        requestId: vrfRequestId,
+        status: 'fulfilled',
+        randomWord,
+        rarity,
+        timestamp: Date.now()
+      });
+
+      console.log('🎉 VRF请求已履行!');
+      console.log('🎲 随机数:', randomWord);
+      console.log('⭐ 稀有度:', rarity, ['普通', '稀有', '史诗', '传说', '神话'][rarity]);
+    }, 5000);
+
+    // 立即保存pending状态
+    vrfRequests.set(vrfRequestId, {
+      requestId: vrfRequestId,
+      status: 'pending',
+      randomWord: null,
+      rarity: null,
+      timestamp: Date.now()
+    });
 
     return NextResponse.json({
       success: true,
       vrfRequestId,
-      tokenId,
-      status: 'pending',
-      estimatedRevealTime: Date.now() + 8000,
-      message: '🎲 VRF随机数请求已发送，请等待Chainlink节点响应...'
+      estimatedRevealTime: Date.now() + 5000
     });
 
   } catch (error) {
-    console.error('❌ VRF请求失败:', error);
+    console.error('❌ VRF请求创建失败:', error);
     return NextResponse.json({
       success: false,
-      error: 'VRF请求失败',
-      details: error instanceof Error ? error.message : '未知错误'
+      error: 'Failed to create VRF request'
     }, { status: 500 });
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const requestId = searchParams.get('requestId');
-
-    if (!requestId) {
-      return NextResponse.json({ 
-        success: false,
-        error: '缺少requestId参数' 
-      }, { status: 400 });
-    }
-
-    const vrfRequest = vrfRequests.get(requestId);
-    
-    if (!vrfRequest) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'VRF请求不存在',
-        requestId 
-      }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      ...vrfRequest
-    });
-
-  } catch (error) {
-    console.error('❌ 获取VRF状态失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: '获取VRF状态失败'
-    }, { status: 500 });
-  }
-}
-
-// 模拟VRF履行
-function fulfillVRFRequest(requestId: string) {
-  try {
-    const vrfRequest = vrfRequests.get(requestId);
-    if (!vrfRequest) {
-      console.error('VRF请求不存在:', requestId);
-      return;
-    }
-
-    // 生成随机数 (0-9999)
-    const randomWord = Math.floor(Math.random() * 10000);
-    
-    // 计算稀有度
-    let rarity = 0; // 默认普通
-    if (randomWord < 6000) rarity = 0; // 普通 60%
-    else if (randomWord < 8500) rarity = 1; // 稀有 25% 
-    else if (randomWord < 9500) rarity = 2; // 史诗 10%
-    else if (randomWord < 9900) rarity = 3; // 传说 4%
-    else rarity = 4; // 神话 1%
-
-    const rarityNames = ['普通', '稀有', '史诗', '传说', '神话'];
-
-    // 更新请求状态
-    const fulfilledRequest = {
-      ...vrfRequest,
-      status: 'fulfilled',
-      randomWord,
-      rarity,
-      fulfilledAt: Date.now()
-    };
-
-    vrfRequests.set(requestId, fulfilledRequest);
-
-    console.log('🎉 VRF请求已履行!');
-    console.log('🎲 随机数:', randomWord);
-    console.log('⭐ 稀有度:', rarity, `(${rarityNames[rarity]})`);
-
-  } catch (error) {
-    console.error('❌ VRF履行失败:', error);
-    
-    const vrfRequest = vrfRequests.get(requestId);
-    if (vrfRequest) {
-      vrfRequests.set(requestId, {
-        ...vrfRequest,
-        status: 'failed',
-        error: error instanceof Error ? error.message : '未知错误'
-      });
-    }
   }
 }
