@@ -1,27 +1,74 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "shanhaiverse-frontend",
+  "version": "1.0.0",
+  "description": "神图计划 ShanHaiVerse - AI驱动的山海经神兽创作平台",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out dist",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.3"
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-toast": "^1.1.5",
+    "@rainbow-me/rainbowkit": "^1.3.0",
+    "@tanstack/react-query": "^4.36.0",
+    "axios": "^1.6.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.263.1",
+    "next": "^15.3.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.8.0",
+    "tailwind-merge": "^1.14.0",
+    "viem": "^1.19.0",
+    "wagmi": "^1.4.0"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.3",
-    "@eslint/eslintrc": "^3"
-  }
+    "@next/bundle-analyzer": "^14.0.0",
+    "@types/node": "^24.0.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.3",
+    "pino-pretty": "^13.0.0",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "NFT",
+    "AI",
+    "山海经",
+    "神兽",
+    "区块链",
+    "DeepSeek",
+    "智谱AI",
+    "Web3",
+    "DApp"
+  ],
+  "author": "ShanHaiVerse Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shanhaiverse/frontend"
+  },
+  "bugs": {
+    "url": "https://github.com/shanhaiverse/frontend/issues"
+  },
+  "homepage": "https://shanhaiverse.com"
 }

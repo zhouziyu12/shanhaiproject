@@ -1,0 +1,353 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAccount, useReadContract } from 'wagmi';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { 
+  Book, 
+  Search,
+  Filter,
+  Grid,
+  List,
+  TrendingUp,
+  Users,
+  Sparkles,
+  Star,
+  Clock,
+  Eye,
+  BarChart3,
+  RefreshCw
+} from 'lucide-react';
+import { CONTRACTS, PROMPT_NFT_ABI, RARITY_CONFIG } from '@/config/web3';
+import { Beast, Rarity } from '@/types/nft';
+import { BeastCard } from './BeastCard';
+import { RarityFilter } from './RarityFilter';
+import { cn } from '@/lib/utils';
+
+export function NFTGallery() {
+  const { address, isConnected } = useAccount();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedRarity, setSelectedRarity] = useState<Rarity | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'rarity'>('newest');
+  const [userBeasts, setUserBeasts] = useState<Beast[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 读取用户的神兽列表
+  const { data: userBeastIds, refetch: refetchBeasts } = useReadContract({
+    address: CONTRACTS.PROMPT_NFT,
+    abi: PROMPT_NFT_ABI,
+    functionName: 'getUserBeasts',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  // 读取稀有度分布
+  const { data: rarityDistribution } = useReadContract({
+    address: CONTRACTS.PROMPT_NFT,
+    abi: PROMPT_NFT_ABI,
+    functionName: 'getRarityDistribution',
+  });
+
+  // 加载神兽详情
+  useEffect(() => {
+    const loadBeastDetails = async () => {
+      if (!userBeastIds || userBeastIds.length === 0) {
+        setUserBeasts([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const beasts: Beast[] = [];
+      
+      for (const tokenId of userBeastIds) {
+        try {
+          // 这里应该调用getBeastInfo，简化示例先用模拟数据
+          const mockBeast: Beast = {
+            tokenId: Number(tokenId),
+            prompt: `神兽 #${tokenId} - ${generateMockPrompt()}`,
+            ipfsImageUrl: '',
+            ipfsMetadataUrl: '',
+            rarity: Math.floor(Math.random() * 5) as Rarity,
+            timestamp: Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+            creator: address || '',
+            rarityRevealed: true,
+            hasIPFS: Math.random() > 0.3,
+            // 扩展属性
+            name: generateMockName(),
+            imageGatewayUrl: `https://via.placeholder.com/400x400/7c3aed/ffffff?text=神兽${tokenId}`
+          };
+          beasts.push(mockBeast);
+        } catch (error) {
+          console.error(`加载神兽 #${tokenId} 失败:`, error);
+        }
+      }
+      
+      setUserBeasts(beasts);
+      setLoading(false);
+    };
+
+    loadBeastDetails();
+  }, [userBeastIds, address]);
+
+  // 过滤和排序神兽
+  const filteredAndSortedBeasts = userBeasts
+    .filter(beast => {
+      // 稀有度过滤
+      if (selectedRarity !== null && beast.rarity !== selectedRarity) {
+        return false;
+      }
+      
+      // 搜索过滤
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          beast.name?.toLowerCase().includes(query) ||
+          beast.prompt.toLowerCase().includes(query) ||
+          beast.tokenId.toString().includes(query)
+        );
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return b.timestamp - a.timestamp;
+        case 'oldest':
+          return a.timestamp - b.timestamp;
+        case 'rarity':
+          return b.rarity - a.rarity;
+        default:
+          return 0;
+      }
+    });
+
+  // 统计信息
+  const stats = {
+    total: userBeasts.length,
+    byRarity: RARITY_CONFIG.NAMES.map((_, index) => 
+      userBeasts.filter(beast => beast.rarity === index).length
+    ),
+    revealed: userBeasts.filter(beast => beast.rarityRevealed).length,
+    withIPFS: userBeasts.filter(beast => beast.hasIPFS).length
+  };
+
+  if (!isConnected) {
+    return (
+      <div className="w-full max-w-4xl mx-auto">
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+          <CardContent className="p-12 text-center">
+            <Book className="h-16 w-16 mx-auto mb-4 text-white/40" />
+            <h2 className="text-2xl font-bold mb-2 text-white">神兽图鉴</h2>
+            <p className="text-white/60 mb-6">
+              连接钱包查看你的神兽收藏
+            </p>
+            <div className="text-sm text-white/50">
+              在这里你可以查看、管理和展示你的所有山海神兽NFT
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* 页面标题 */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
+          <Book className="h-8 w-8" />
+          神兽图鉴
+        </h1>
+        <p className="text-white/70">你创造的山海经神兽收藏</p>
+      </div>
+
+      {/* 统计信息 */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-white">
+              {stats.total}
+            </div>
+            <div className="text-sm text-white/60">我的神兽</div>
+          </CardContent>
+        </Card>
+        
+        {RARITY_CONFIG.NAMES.map((name, index) => (
+          <Card key={index} className="bg-white/5 border-white/10 backdrop-blur-sm">
+            <CardContent className="p-4 text-center">
+              <div className={cn(
+                "text-2xl font-bold",
+                RARITY_CONFIG.COLORS[index as keyof typeof RARITY_CONFIG.COLORS]
+              )}>
+                {stats.byRarity[index]}
+              </div>
+              <div className="text-sm text-white/60">{name}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* 筛选和搜索 */}
+      <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            {/* 搜索 */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
+                <Input
+                  placeholder="搜索神兽名称、描述或ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* 稀有度过滤 */}
+              <RarityFilter
+                selected={selectedRarity}
+                onSelect={setSelectedRarity}
+              />
+
+              {/* 排序 */}
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-white/60" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-white/10 border border-white/20 rounded-md px-3 py-1 text-white text-sm"
+                >
+                  <option value="newest">最新创建</option>
+                  <option value="oldest">最早创建</option>
+                  <option value="rarity">稀有度</option>
+                </select>
+              </div>
+
+              {/* 视图切换 */}
+              <div className="flex items-center gap-1 bg-white/10 rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'grid' ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* 刷新 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchBeasts()}
+                disabled={loading}
+              >
+                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 神兽列表 */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="bg-white/5 border-white/10 animate-pulse">
+              <CardContent className="p-6">
+                <div className="aspect-square bg-white/10 rounded-lg mb-4" />
+                <div className="space-y-2">
+                  <div className="h-4 bg-white/10 rounded w-3/4" />
+                  <div className="h-3 bg-white/10 rounded w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredAndSortedBeasts.length === 0 ? (
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+          <CardContent className="p-12 text-center">
+            <Sparkles className="h-16 w-16 mx-auto mb-4 text-white/40" />
+            <h3 className="text-xl font-bold text-white mb-2">
+              {userBeasts.length === 0 ? '还没有神兽' : '没有找到符合条件的神兽'}
+            </h3>
+            <p className="text-white/60 mb-6">
+              {userBeasts.length === 0 
+                ? '快去创造你的第一只山海神兽吧！' 
+                : '尝试调整搜索或筛选条件'
+              }
+            </p>
+            {userBeasts.length === 0 && (
+              <Button asChild>
+                <a href="/mint">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  开始创造
+                </a>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className={cn(
+          viewMode === 'grid' 
+            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+            : 'space-y-4'
+        )}>
+          {filteredAndSortedBeasts.map((beast) => (
+            <BeastCard 
+              key={beast.tokenId} 
+              beast={beast} 
+              viewMode={viewMode}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 结果统计 */}
+      {filteredAndSortedBeasts.length > 0 && (
+        <div className="text-center text-white/60 text-sm">
+          显示 {filteredAndSortedBeasts.length} 个结果，共 {userBeasts.length} 只神兽
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 辅助函数
+function generateMockPrompt(): string {
+  const prompts = [
+    '威武的火焰神龙，龙鳞如熔岩般赤红',
+    '神秘的九尾狐仙，银毛飘逸如云',
+    '巨大的鲲鹏，展翅遮天蔽日',
+    '优雅的青龙，腾云驾雾',
+    '神圣的朱雀，浴火重生',
+    '古老的玄武，守护四方',
+    '祥瑞的麒麟，踏云而来',
+    '冰霜神兽，身披寒冰铠甲'
+  ];
+  return prompts[Math.floor(Math.random() * prompts.length)];
+}
+
+function generateMockName(): string {
+  const prefixes = ['天', '玄', '神', '灵', '圣', '仙', '古', '幻'];
+  const suffixes = ['龙', '凤', '麟', '虎', '狮', '鹏', '鹰', '狐'];
+  
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+  
+  return `${prefix}${suffix}`;
+}
