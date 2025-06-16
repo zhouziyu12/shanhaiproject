@@ -10,13 +10,25 @@ interface UploadRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 添加请求体解析错误处理
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('❌ 请求体解析失败:', parseError);
+      return NextResponse.json({ 
+        error: '请求格式错误',
+        details: 'Invalid JSON in request body'
+      }, { status: 400 });
+    }
+
     const { 
       imageUrl, 
       originalInput, 
       optimizedPrompt, 
       style, 
       creator 
-    }: UploadRequest = await request.json();
+    }: UploadRequest = body;
 
     if (!imageUrl || !optimizedPrompt || !creator) {
       return NextResponse.json({ 
@@ -24,9 +36,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('📤 开始NFT.Storage上传流程...');
-    console.log('🎨 原始输入:', originalInput.substring(0, 50) + '...');
-    console.log('✨ 优化prompt:', optimizedPrompt.substring(0, 50) + '...');
+    console.log('📤 开始Pinata IPFS上传流程...');
+    console.log('🎨 原始输入:', originalInput?.substring(0, 50) + '...');
+    console.log('✨ 优化prompt:', optimizedPrompt?.substring(0, 50) + '...');
 
     // 第一步：下载AI生成的图片
     console.log('📥 下载AI生成的图片...');
@@ -35,46 +47,49 @@ export async function POST(request: NextRequest) {
     // 第二步：创建完整的NFT元数据
     console.log('📝 创建NFT元数据...');
     const metadata = createNFTMetadata({
-      originalInput,
+      originalInput: originalInput || '',
       optimizedPrompt,
-      style,
+      style: style || 'modern',
       creator,
       imageId: generateImageId()
     });
 
-    // 第三步：上传到NFT.Storage
-    console.log('🚀 上传到NFT.Storage...');
-    const ipfsResult = await uploadToNFTStorage(imageBuffer, metadata);
+    // 第三步：上传到Pinata IPFS
+    console.log('🚀 上传到Pinata IPFS...');
+    const ipfsResult = await uploadToPinata(imageBuffer, metadata);
 
     // 第四步：返回完整结果
     const result = {
       success: true,
       ipfs: ipfsResult,
       metadata: metadata,
-      originalInput,
+      originalInput: originalInput || '',
       optimizedPrompt,
       workflow: {
         step1: '✅ 图片下载完成',
         step2: '✅ 元数据创建完成', 
-        step3: '✅ NFT.Storage上传完成',
+        step3: '✅ Pinata IPFS上传完成',
         step4: '✅ 准备铸造NFT'
       },
       mintInfo: {
-        // 返回铸造NFT所需的最终URL
         tokenURI: ipfsResult.metadataUrl,
         imageUrl: ipfsResult.imageUrl,
         gatewayUrl: ipfsResult.imageGatewayUrl
       }
     };
 
-    console.log('🎉 NFT.Storage上传流程完成!');
+    console.log('🎉 Pinata IPFS上传流程完成!');
     return NextResponse.json(result);
 
   } catch (error) {
-    console.error('❌ NFT.Storage上传失败:', error);
+    console.error('❌ Pinata IPFS上传失败:', error);
+    
+    // 返回详细的错误信息
     return NextResponse.json({
+      success: false,
       error: 'IPFS上传失败',
       details: error instanceof Error ? error.message : '未知错误',
+      stack: error instanceof Error ? error.stack : undefined,
       workflow: {
         step1: '❌ 处理中断',
         step2: '⏸️ 未完成',
@@ -85,78 +100,131 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// NFT.Storage上传函数
-async function uploadToNFTStorage(imageBuffer: Buffer, metadata: any) {
-  console.log('🔄 开始NFT.Storage上传...');
+// Pinata IPFS上传函数
+async function uploadToPinata(imageBuffer: Buffer, metadata: any) {
+  console.log('🔄 开始Pinata IPFS上传...');
   
   try {
-    // 1. 上传图片到NFT.Storage
-    console.log('📸 上传图片...');
-    const imageResponse = await fetch('https://api.nft.storage/upload', {
+    // 检查Pinata JWT Token
+    const pinataJWT = process.env.PINATA_JWT;
+    if (!pinataJWT) {
+      throw new Error('PINATA_JWT环境变量未配置');
+    }
+
+    // 1. 上传图片到Pinata
+    console.log('📸 上传图片到Pinata...');
+    
+    const imageFormData = new FormData();
+    const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
+    imageFormData.append('file', imageBlob, 'beast.png');
+    
+    // 添加Pinata选项
+    const pinataImageOptions = JSON.stringify({
+      cidVersion: 1,
+      customPinPolicy: {
+        regions: [
+          { id: 'FRA1', desiredReplicationCount: 1 },
+          { id: 'NYC1', desiredReplicationCount: 1 }
+        ]
+      }
+    });
+    imageFormData.append('pinataOptions', pinataImageOptions);
+
+    const imageMetadata = JSON.stringify({
+      name: `ShanHaiVerse Beast ${Date.now()}`,
+      keyvalues: {
+        type: 'beast-image',
+        project: 'shanhaiverse'
+      }
+    });
+    imageFormData.append('pinataMetadata', imageMetadata);
+
+    const imageResponse = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.NFT_STORAGE_TOKEN}`,
-        'Content-Type': 'image/png',
+        'Authorization': `Bearer ${pinataJWT}`,
       },
-      body: imageBuffer,
+      body: imageFormData,
     });
 
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text();
-      console.error('图片上传失败:', imageResponse.status, errorText);
-      throw new Error(`图片上传失败: ${imageResponse.status}`);
+      console.error('Pinata图片上传失败:', imageResponse.status, errorText);
+      throw new Error(`Pinata图片上传失败: ${imageResponse.status} - ${errorText}`);
     }
 
     const imageResult = await imageResponse.json();
-    const imageCid = imageResult.value.cid;
+    const imageCid = imageResult.IpfsHash;
     const imageIpfsUrl = `ipfs://${imageCid}`;
     
-    console.log('✅ 图片上传成功, CID:', imageCid);
+    console.log('✅ 图片上传成功到Pinata, CID:', imageCid);
 
     // 2. 更新元数据中的图片URL
     metadata.image = imageIpfsUrl;
 
-    // 3. 上传元数据到NFT.Storage
-    console.log('📄 上传元数据...');
-    const metadataResponse = await fetch('https://api.nft.storage/upload', {
+    // 3. 上传元数据到Pinata
+    console.log('📄 上传元数据到Pinata...');
+    
+    const metadataResponse = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.NFT_STORAGE_TOKEN}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pinataJWT}`,
       },
-      body: JSON.stringify(metadata),
+      body: JSON.stringify({
+        pinataContent: metadata,
+        pinataOptions: {
+          cidVersion: 1,
+          customPinPolicy: {
+            regions: [
+              { id: 'FRA1', desiredReplicationCount: 1 },
+              { id: 'NYC1', desiredReplicationCount: 1 }
+            ]
+          }
+        },
+        pinataMetadata: {
+          name: `ShanHaiVerse Metadata ${Date.now()}`,
+          keyvalues: {
+            type: 'beast-metadata',
+            project: 'shanhaiverse'
+          }
+        }
+      }),
     });
 
     if (!metadataResponse.ok) {
       const errorText = await metadataResponse.text();
-      console.error('元数据上传失败:', metadataResponse.status, errorText);
-      throw new Error(`元数据上传失败: ${metadataResponse.status}`);
+      console.error('Pinata元数据上传失败:', metadataResponse.status, errorText);
+      throw new Error(`Pinata元数据上传失败: ${metadataResponse.status} - ${errorText}`);
     }
 
     const metadataResult = await metadataResponse.json();
-    const metadataCid = metadataResult.value.cid;
+    const metadataCid = metadataResult.IpfsHash;
     
-    console.log('✅ 元数据上传成功, CID:', metadataCid);
+    console.log('✅ 元数据上传成功到Pinata, CID:', metadataCid);
     
     // 4. 返回结果
     return {
       imageUrl: imageIpfsUrl,
       metadataUrl: `ipfs://${metadataCid}`,
-      imageGatewayUrl: `https://nftstorage.link/ipfs/${imageCid}`,
-      metadataGatewayUrl: `https://nftstorage.link/ipfs/${metadataCid}`,
+      imageGatewayUrl: `https://gateway.pinata.cloud/ipfs/${imageCid}`,
+      metadataGatewayUrl: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
       cids: {
         image: imageCid,
         metadata: metadataCid
       },
-      service: 'NFT.Storage'
+      service: 'Pinata IPFS',
+      verificationUrls: {
+        imageIPFS: `https://ipfs.io/ipfs/${imageCid}`,
+        metadataIPFS: `https://ipfs.io/ipfs/${metadataCid}`,
+        imagePinata: `https://gateway.pinata.cloud/ipfs/${imageCid}`,
+        metadataPinata: `https://gateway.pinata.cloud/ipfs/${metadataCid}`
+      }
     };
 
   } catch (error) {
-    console.error('NFT.Storage上传错误:', error);
-    
-    // 如果NFT.Storage失败，使用模拟IPFS
-    console.log('⚠️ NFT.Storage失败，使用模拟IPFS');
-    return createMockIPFS(metadata);
+    console.error('Pinata IPFS上传错误:', error);
+    throw error;
   }
 }
 
@@ -166,7 +234,7 @@ async function downloadImage(imageUrl: string): Promise<Buffer> {
     console.log('🔗 从URL下载图片:', imageUrl);
     const response = await fetch(imageUrl);
     if (!response.ok) {
-      throw new Error(`图片下载失败: ${response.status}`);
+      throw new Error(`图片下载失败: ${response.status} - ${response.statusText}`);
     }
     
     const arrayBuffer = await response.arrayBuffer();
@@ -175,7 +243,7 @@ async function downloadImage(imageUrl: string): Promise<Buffer> {
     return buffer;
   } catch (error) {
     console.error('图片下载错误:', error);
-    throw new Error('无法下载AI生成的图片');
+    throw new Error(`无法下载AI生成的图片: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 }
 
@@ -193,7 +261,6 @@ function createNFTMetadata({
   creator: string;
   imageId: string;
 }) {
-  const rarityNames = ['普通', '稀有', '史诗', '传说', '神话'];
   const styleNames = {
     classic: '古典水墨',
     modern: '现代插画',
@@ -205,8 +272,8 @@ function createNFTMetadata({
   
   return {
     name: `山海神兽 · ${beastName}`,
-    description: `${optimizedPrompt}\n\n====== 创作信息 ======\n✨ 原始灵感：${originalInput}\n🎨 艺术风格：${styleNames[style as keyof typeof styleNames] || style}\n🎲 稀有度：待VRF分配\n🏛️ 项目：神图计划 ShanHaiVerse\n🤖 AI技术：DeepSeek + 智谱AI\n💾 存储：NFT.Storage + IPFS\n⏰ 创作时间：${new Date().toLocaleString('zh-CN')}\n\n这是通过AI技术重新演绎的山海经神兽，融合了传统文化与现代科技，每一只都是独一无二的数字艺术品。`,
-    image: '', // 将在上传后设置
+    description: `${optimizedPrompt}\n\n====== 创作信息 ======\n✨ 原始灵感：${originalInput}\n🎨 艺术风格：${styleNames[style as keyof typeof styleNames] || style}\n🎲 稀有度：待VRF分配\n🏛️ 项目：神图计划 ShanHaiVerse\n🤖 AI技术：DeepSeek + 智谱AI\n💾 存储：Pinata IPFS\n⏰ 创作时间：${new Date().toLocaleString('zh-CN')}\n\n这是通过AI技术重新演绎的山海经神兽，融合了传统文化与现代科技，每一只都是独一无二的数字艺术品。`,
+    image: '',
     external_url: 'https://shanhaiverse.com',
     background_color: '7c3aed',
     attributes: [
@@ -228,7 +295,7 @@ function createNFTMetadata({
       },
       {
         trait_type: '存储方式',
-        value: 'NFT.Storage + IPFS'
+        value: 'Pinata IPFS'
       },
       {
         trait_type: '创作时间',
@@ -243,7 +310,6 @@ function createNFTMetadata({
         value: imageId
       }
     ],
-    // 扩展属性
     properties: {
       originalInput: originalInput,
       optimizedPrompt: optimizedPrompt,
@@ -254,29 +320,10 @@ function createNFTMetadata({
       aiWorkflow: {
         promptOptimizer: 'DeepSeek',
         imageGenerator: '智谱AI',
-        storage: 'NFT.Storage',
+        storage: 'Pinata IPFS',
         version: '1.0.0'
       }
     }
-  };
-}
-
-// 创建模拟IPFS结果（备用方案）
-function createMockIPFS(metadata: any) {
-  const mockImageCid = `Qm${generateRandomHash()}`;
-  const mockMetadataCid = `Qm${generateRandomHash()}`;
-  
-  return {
-    imageUrl: `ipfs://${mockImageCid}`,
-    metadataUrl: `ipfs://${mockMetadataCid}`,
-    imageGatewayUrl: `https://ipfs.io/ipfs/${mockImageCid}`,
-    metadataGatewayUrl: `https://ipfs.io/ipfs/${mockMetadataCid}`,
-    cids: {
-      image: mockImageCid,
-      metadata: mockMetadataCid
-    },
-    service: '模拟IPFS',
-    note: '模拟IPFS - NFT.Storage暂时不可用'
   };
 }
 
@@ -285,7 +332,6 @@ function generateBeastName(input: string): string {
   const prefixes = ['天', '玄', '神', '灵', '圣', '仙', '古', '幻', '紫', '金'];
   const suffixes = ['龙', '凤', '麟', '虎', '狮', '鹏', '鹰', '狐', '龟', '蛇'];
   
-  // 基于输入生成一致的名称
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     hash = input.charCodeAt(i) + ((hash << 5) - hash);
@@ -300,10 +346,4 @@ function generateBeastName(input: string): string {
 // 辅助函数
 function generateImageId(): string {
   return `img_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-}
-
-function generateRandomHash(): string {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
 }
