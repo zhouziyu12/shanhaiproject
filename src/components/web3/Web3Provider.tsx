@@ -7,12 +7,6 @@ interface Web3ProviderProps {
 }
 
 export function Web3Provider({ children }: Web3ProviderProps) {
-  // 简化版本，暂时不包含真实的Web3功能
-  // 等基础功能正常后再添加 RainbowKit 和 Wagmi
-  
-  return (
-    <div>
-      {children}
-    </div>
-  );
+  // 简化版本，只是一个容器
+  return <div>{children}</div>;
 }
