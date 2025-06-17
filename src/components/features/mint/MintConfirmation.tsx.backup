@@ -82,10 +82,9 @@ export function MintConfirmation({
 
       console.log('✅ IPFS上传完成:', ipfsData.ipfs);
 
-      // 第二步：铸造NFT（使用折扣）
+      // 第二步：铸造NFT
       console.log('⛏️ 第二步：铸造NFT...');
-      console.log('💰 使用折扣:', appliedDiscountPercent, '%');
-      const mintResult = await mintNFT(address, ipfsData.mintInfo.tokenURI, appliedDiscountPercent);
+      const mintResult = await mintNFT(address, ipfsData.mintInfo.tokenURI);
 
       if (!mintResult.success) {
         throw new Error(mintResult.error || '铸造失败');
