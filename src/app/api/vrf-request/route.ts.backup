@@ -1,4 +1,4 @@
-// app/api/vrf-request/route.ts - 修复BigInt序列化问题
+// app/api/vrf-request/route.ts - 最终版真实Chainlink VRF API
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { prisma } from '../../../../lib/prisma';
@@ -42,19 +42,6 @@ const SHANHAI_NFT_ABI = [
 const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
 const contract = new ethers.Contract(SHANHAI_NFT_CONTRACT_ADDRESS, SHANHAI_NFT_ABI, provider);
 
-// 🔧 BigInt序列化辅助函数
-function serializeVRFRequest(vrfRequest: any) {
-  return {
-    success: true,
-    requestId: vrfRequest.requestId,
-    status: vrfRequest.status,
-    randomWord: vrfRequest.randomWord ? Number(vrfRequest.randomWord) : null,
-    rarity: vrfRequest.rarity,
-    tokenId: vrfRequest.tokenId ? vrfRequest.tokenId.toString() : null,
-    timestamp: vrfRequest.createdAt.getTime()
-  };
-}
-
 // GET: 查询VRF状态
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -88,9 +75,17 @@ export async function GET(request: NextRequest) {
       rarity: vrfRequest.rarity
     });
 
-    // 2. 如果已经完成，直接返回（修复BigInt序列化）
+    // 2. 如果已经完成，直接返回
     if (vrfRequest.status === 'fulfilled') {
-      return NextResponse.json(serializeVRFRequest(vrfRequest));
+      return NextResponse.json({
+        success: true,
+        requestId: vrfRequest.requestId,
+        status: 'fulfilled',
+        randomWord: vrfRequest.randomWord,
+        rarity: vrfRequest.rarity,
+        tokenId: vrfRequest.tokenId?.toString(),
+        timestamp: vrfRequest.createdAt.getTime()
+      });
     }
 
     // 3. 查询链上最新状态
@@ -111,7 +106,7 @@ export async function GET(request: NextRequest) {
         where: { requestId },
         data: {
           status: 'fulfilled',
-          randomWord: chainStatus.randomWord || Math.floor(Math.random() * 1000000),
+          randomWord: chainStatus.randomWord || Date.now(),
           rarity: chainStatus.rarity
         }
       });
@@ -121,7 +116,15 @@ export async function GET(request: NextRequest) {
         randomWord: chainStatus.randomWord
       });
 
-      return NextResponse.json(serializeVRFRequest(updatedVRF));
+      return NextResponse.json({
+        success: true,
+        requestId: updatedVRF.requestId,
+        status: 'fulfilled',
+        randomWord: updatedVRF.randomWord,
+        rarity: updatedVRF.rarity,
+        tokenId: updatedVRF.tokenId?.toString(),
+        timestamp: updatedVRF.createdAt.getTime()
+      });
     } else {
       // 仍在等待
       console.log('⏳ VRF仍在处理中...');
@@ -178,7 +181,7 @@ export async function POST(request: NextRequest) {
           }
         } catch (eventError) {
           console.warn('⚠️ 查询事件失败，使用备用随机数');
-          randomWord = Math.floor(Math.random() * 1000000);
+          randomWord = Date.now();
         }
 
         // 直接创建已完成的记录
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
             status: 'fulfilled',
             tokenId: BigInt(tokenId),
             requester: requester.toLowerCase(),
-            randomWord: BigInt(randomWord || Math.floor(Math.random() * 1000000)),
+            randomWord: randomWord,
             rarity: parseInt(beastInfo.rarity.toString())
           }
         });
@@ -225,15 +228,17 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 保存pending记录的其余逻辑...
+    // 确保用户存在
     await prisma.user.upsert({
       where: { address: requester.toLowerCase() },
       update: {},
       create: { address: requester.toLowerCase() }
     });
 
+    // 生成请求ID
     const vrfRequestId = `vrf_${tokenId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
+    // 保存到数据库
     const vrfRequest = await prisma.vRFRequest.create({
       data: {
         requestId: vrfRequestId,
@@ -245,11 +250,31 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 VRF监控记录已创建');
 
+    // 立即检查一次状态（可能已经完成了）
+    setTimeout(async () => {
+      try {
+        const status = await queryChainStatusWithRetry(BigInt(tokenId));
+        if (status.rarityRevealed) {
+          await prisma.vRFRequest.update({
+            where: { requestId: vrfRequestId },
+            data: {
+              status: 'fulfilled',
+              randomWord: status.randomWord || Date.now(),
+              rarity: status.rarity
+            }
+          });
+          console.log('🎉 初始检查发现VRF已完成');
+        }
+      } catch (error) {
+        console.error('⚠️ 初始状态检查失败:', error);
+      }
+    }, 2000);
+
     return NextResponse.json({
       success: true,
       vrfRequestId,
-      message: 'VRF monitoring started',
-      estimatedRevealTime: Date.now() + (3 * 60 * 1000),
+      message: 'VRF monitoring started, waiting for Chainlink fulfillment',
+      estimatedRevealTime: Date.now() + (3 * 60 * 1000), // 3分钟估计
       chainInfo: {
         tokenId: tokenId,
         contractAddress: SHANHAI_NFT_CONTRACT_ADDRESS,
@@ -280,7 +305,14 @@ async function queryChainStatusWithRetry(tokenId: bigint, retries = MAX_RETRIES)
       
       const beastInfo = await contract.beasts(tokenId);
       
+      console.log('🐲 Beast信息:', {
+        rarity: beastInfo.rarity.toString(),
+        rarityRevealed: beastInfo.rarityRevealed,
+        creator: beastInfo.creator
+      });
+
       if (beastInfo.rarityRevealed) {
+        // 尝试获取随机数（从事件）
         let randomWord;
         try {
           const filter = contract.filters.RarityRevealed(tokenId);
@@ -293,7 +325,7 @@ async function queryChainStatusWithRetry(tokenId: bigint, retries = MAX_RETRIES)
           }
         } catch (eventError) {
           console.warn('⚠️ 查询事件失败:', eventError);
-          randomWord = Math.floor(Math.random() * 1000000);
+          randomWord = Date.now(); // 备用随机数
         }
 
         return {
@@ -312,12 +344,55 @@ async function queryChainStatusWithRetry(tokenId: bigint, retries = MAX_RETRIES)
       console.error(`❌ 查询尝试 ${i + 1} 失败:`, error);
       
       if (i === retries - 1) {
-        throw error;
+        throw error; // 最后一次重试失败，抛出错误
       }
       
+      // 等待后重试
       await new Promise(resolve => setTimeout(resolve, 2000 * (i + 1)));
     }
   }
 
   throw new Error('All retry attempts failed');
+}
+
+// 可选：后台监控任务（简化版）
+if (process.env.ENABLE_CHAIN_MONITORING === 'true' && typeof window === 'undefined') {
+  const POLL_INTERVAL = parseInt(process.env.VRF_POLL_INTERVAL || '15000');
+  
+  console.log('🚀 启动VRF后台监控...');
+  
+  setInterval(async () => {
+    try {
+      // 查找所有pending的VRF请求
+      const pendingRequests = await prisma.vRFRequest.findMany({
+        where: { status: 'pending' },
+        take: 5 // 限制数量避免过载
+      });
+
+      for (const request of pendingRequests) {
+        if (request.tokenId) {
+          try {
+            const status = await queryChainStatusWithRetry(request.tokenId, 1);
+            
+            if (status.rarityRevealed) {
+              await prisma.vRFRequest.update({
+                where: { id: request.id },
+                data: {
+                  status: 'fulfilled',
+                  randomWord: status.randomWord || Date.now(),
+                  rarity: status.rarity
+                }
+              });
+              
+              console.log(`🎉 后台监控发现VRF完成: Token ${request.tokenId}`);
+            }
+          } catch (error) {
+            console.error(`⚠️ 监控Token ${request.tokenId}失败:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ 后台监控任务失败:', error);
+    }
+  }, POLL_INTERVAL);
 }

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const creatorAddress = creator.toLowerCase();
-    console.log('👤 准备处理NFT，用户:', creatorAddress);
+    console.log('👤 准备创建NFT，用户:', creatorAddress);
 
     // 确保tokenId是BigInt
     const tokenIdBigInt = BigInt(tokenId);
@@ -64,69 +64,75 @@ export async function POST(request: NextRequest) {
       create: { address: creatorAddress }
     });
 
-    // 🔧 修复：使用原子upsert操作，避免并发竞争
-    const result = await prisma.nFT.upsert({
-      where: { tokenId: tokenIdBigInt },
-      update: {
-        // 如果NFT已存在，更新这些字段
-        name,
-        originalInput,
-        optimizedPrompt,
-        style,
-        creator: creatorAddress,
-        imageUrl,
-        ipfsImageUrl,
-        ipfsMetadataUrl,
-        gatewayImageUrl,
-        rarity,
-        rarityRevealed: true,
-        vrfRequestId,
-        updatedAt: new Date()
-      },
-      create: {
-        // 如果NFT不存在，创建新记录
-        tokenId: tokenIdBigInt,
-        name,
-        originalInput,
-        optimizedPrompt,
-        style,
-        creator: creatorAddress,
-        imageUrl,
-        ipfsImageUrl,
-        ipfsMetadataUrl,
-        gatewayImageUrl,
-        rarity,
-        rarityRevealed: true,
-        vrfRequestId,
-        mintedAt: new Date()
-      }
+    // 检查tokenId是否已存在
+    const existingNFT = await prisma.nFT.findUnique({
+      where: { tokenId: tokenIdBigInt }
     });
 
-    // 转换BigInt为字符串
-    const serializedResult = {
-      ...result,
-      tokenId: result.tokenId.toString()
-    };
-
-    // 判断是创建还是更新（通过检查mintedAt和updatedAt是否相同）
-    const action = result.mintedAt.getTime() === result.updatedAt.getTime() ? 'created' : 'updated';
-    
-    console.log(`✅ API: NFT${action === 'created' ? '创建' : '更新'}成功:`, {
-      tokenId: tokenId,
-      action: action,
-      name: name
-    });
-    
-    return NextResponse.json({ 
-      success: true, 
-      nft: serializedResult, 
-      action: action 
-    });
+    let result;
+    if (existingNFT) {
+      console.log('⚠️ TokenId已存在，更新现有NFT:', tokenId);
+      result = await prisma.nFT.update({
+        where: { tokenId: tokenIdBigInt },
+        data: {
+          name,
+          originalInput,
+          optimizedPrompt,
+          style,
+          creator: creatorAddress,
+          imageUrl,
+          ipfsImageUrl,
+          ipfsMetadataUrl,
+          gatewayImageUrl,
+          rarity,
+          rarityRevealed: true,
+          vrfRequestId,
+          updatedAt: new Date()
+        }
+      });
+      
+      // 转换BigInt为字符串
+      const serializedResult = {
+        ...result,
+        tokenId: result.tokenId.toString()
+      };
+      
+      console.log('✅ API: NFT更新成功:', serializedResult);
+      return NextResponse.json({ success: true, nft: serializedResult, action: 'updated' });
+    } else {
+      console.log('🆕 创建新NFT:', tokenId);
+      result = await prisma.nFT.create({
+        data: {
+          tokenId: tokenIdBigInt,
+          name,
+          originalInput,
+          optimizedPrompt,
+          style,
+          creator: creatorAddress,
+          imageUrl,
+          ipfsImageUrl,
+          ipfsMetadataUrl,
+          gatewayImageUrl,
+          rarity,
+          rarityRevealed: true,
+          vrfRequestId
+        }
+      });
+      
+      // 转换BigInt为字符串
+      const serializedResult = {
+        ...result,
+        tokenId: result.tokenId.toString()
+      };
+      
+      console.log('✅ API: NFT创建成功:', serializedResult);
+      return NextResponse.json({ success: true, nft: serializedResult, action: 'created' });
+    }
 
   } catch (error) {
-    console.error('❌ API: 处理NFT失败:', error);
+    console.error('❌ API: 创建NFT失败:', error);
     return NextResponse.json({ 
-      error: 'Failed to process NFT', 
+      error: 'Failed to create NFT', 
       details: error.message
     }, { status: 500 });
   }

@@ -42,7 +42,7 @@ model VRFRequest {
   id          String   @id @default(cuid())
   requestId   String   @unique
   status      String
-  randomWord  BigInt?
+  randomWord  Int?
   rarity      Int?
   tokenId     BigInt?
   requester   String
