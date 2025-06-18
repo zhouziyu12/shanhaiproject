@@ -1,0 +1,578 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther, formatEther } from 'viem';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Coins, Gift, Loader2, RefreshCw, TrendingUp, Zap, CheckCircle, AlertCircle } from 'lucide-react';
+
+// 增强版合约地址
+const SHT_TOKEN_ADDRESS = '0xe2241E16949d01356bA43D9401D3775E29Ea9F4c' as const;
+
+// 完整的SHT Token ABI
+const SHT_TOKEN_ABI = [
+  {
+    "inputs": [{"internalType": "address","name": "account","type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address[]","name": "recipients","type": "address[]"},
+      {"internalType": "uint256[]","name": "amounts","type": "uint256[]"}
+    ],
+    "name": "airdrop",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address","name": "user","type": "address"}],
+    "name": "getUserStats",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "uint256","name": "lastClaimTime","type": "uint256"},
+          {"internalType": "uint256","name": "lastNFTClaimTime","type": "uint256"},
+          {"internalType": "uint256","name": "consecutiveDays","type": "uint256"},
+          {"internalType": "uint256","name": "totalClaimed","type": "uint256"},
+          {"internalType": "uint256","name": "totalNFTRewards","type": "uint256"},
+          {"internalType": "uint256","name": "mintCount","type": "uint256"}
+        ],
+        "internalType": "struct ShanHaiToken.UserStats",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "claimDailyReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address","name": "user","type": "address"}],
+    "name": "canClaimToday",
+    "outputs": [{"internalType": "bool","name": "","type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const;
+
+export default function CompleteSHTRewardsPage() {
+  const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 读取SHT余额
+  const { data: balance, refetch: refetchBalance, isLoading: balanceLoading, error: balanceError } = useReadContract({
+    address: SHT_TOKEN_ADDRESS,
+    abi: SHT_TOKEN_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { 
+      enabled: !!address && mounted,
+      refetchInterval: 5000, // 每5秒刷新一次
+    },
+  });
+
+  // 读取总供应量
+  const { data: totalSupply, isLoading: totalSupplyLoading } = useReadContract({
+    address: SHT_TOKEN_ADDRESS,
+    abi: SHT_TOKEN_ABI,
+    functionName: 'totalSupply',
+    query: { 
+      enabled: mounted,
+      refetchInterval: 10000, // 每10秒刷新一次
+    },
+  });
+
+  // 读取用户统计
+  const { data: userStats, refetch: refetchUserStats } = useReadContract({
+    address: SHT_TOKEN_ADDRESS,
+    abi: SHT_TOKEN_ABI,
+    functionName: 'getUserStats',
+    args: address ? [address] : undefined,
+    query: { 
+      enabled: !!address && mounted,
+      refetchInterval: 10000,
+    },
+  });
+
+  // 读取是否可以签到
+  const { data: canClaim, refetch: refetchCanClaim } = useReadContract({
+    address: SHT_TOKEN_ADDRESS,
+    abi: SHT_TOKEN_ABI,
+    functionName: 'canClaimToday',
+    args: address ? [address] : undefined,
+    query: { 
+      enabled: !!address && mounted,
+      refetchInterval: 5000,
+    },
+  });
+
+  // 空投合约调用
+  const { writeContract, data: hash, error, isPending } = useWriteContract();
+
+  // 等待交易确认
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // 空投50 SHT功能
+  const handleAirdrop = async () => {
+    if (!address || !isConnected) {
+      alert('请先连接钱包');
+      return;
+    }
+
+    try {
+      const airdropAmount = parseEther('50'); // 50 SHT
+      
+      writeContract({
+        address: SHT_TOKEN_ADDRESS,
+        abi: SHT_TOKEN_ABI,
+        functionName: 'airdrop',
+        args: [[address], [airdropAmount]],
+      });
+    } catch (error) {
+      console.error('空投失败:', error);
+    }
+  };
+
+  // 每日签到功能
+  const handleDailyClaim = async () => {
+    if (!address || !isConnected) {
+      alert('请先连接钱包');
+      return;
+    }
+
+    try {
+      writeContract({
+        address: SHT_TOKEN_ADDRESS,
+        abi: SHT_TOKEN_ABI,
+        functionName: 'claimDailyReward',
+      });
+    } catch (error) {
+      console.error('每日签到失败:', error);
+    }
+  };
+
+  // 手动刷新所有数据
+  const refreshAllData = async () => {
+    setLastRefresh(new Date());
+    await Promise.all([
+      refetchBalance(),
+      refetchUserStats(), 
+      refetchCanClaim()
+    ]);
+  };
+
+  // 监听交易完成，自动刷新数据
+  useEffect(() => {
+    if (isConfirmed) {
+      setTimeout(() => {
+        refreshAllData();
+      }, 2000); // 2秒后刷新所有数据
+    }
+  }, [isConfirmed]);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span>正在加载SHT奖励中心...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6 max-w-4xl">
+      {/* 页面标题 */}
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          🎁 SHT 奖励中心
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          查看余额 • 获得奖励 • 每日签到 • 测试功能
+        </p>
+        <div className="flex justify-center gap-2">
+          <Badge variant="secondary">增强版 v2.0</Badge>
+          <Badge variant="outline">Sepolia 测试网</Badge>
+        </div>
+      </div>
+
+      {/* 钱包连接状态 */}
+      <Card className="border-2 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5" />
+            钱包连接状态
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex justify-center">
+            <ConnectButton />
+          </div>
+          
+          {isConnected && address && (
+            <div className="text-center space-y-2 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-sm text-green-600">✅ 钱包已连接</div>
+              <div className="font-mono text-xs bg-white p-2 rounded border">
+                {address}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* SHT余额和统计 */}
+      {isConnected && (
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* 余额显示 */}
+          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-green-700">
+                  <TrendingUp className="h-6 w-6" />
+                  SHT 代币余额
+                </div>
+                <Button 
+                  onClick={refreshAllData}
+                  variant="outline" 
+                  size="sm"
+                  disabled={balanceLoading}
+                >
+                  {balanceLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center space-y-3">
+                <div className="text-4xl font-bold text-green-700">
+                  {balanceLoading ? (
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                  ) : balanceError ? (
+                    <div className="text-red-500 text-base">读取失败</div>
+                  ) : (
+                    `${balance ? Number(formatEther(balance)).toLocaleString() : '0'}`
+                  )}
+                </div>
+                <div className="text-lg font-medium text-green-600">SHT</div>
+                <div className="text-sm text-green-600">
+                  当前钱包代币余额
+                </div>
+                {totalSupply && (
+                  <div className="text-xs text-muted-foreground pt-2 border-t">
+                    总供应量: {Number(formatEther(totalSupply)).toLocaleString()} SHT
+                  </div>
+                )}
+                {lastRefresh && (
+                  <div className="text-xs text-muted-foreground">
+                    最后更新: {lastRefresh.toLocaleTimeString()}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 用户统计 */}
+          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Zap className="h-6 w-6" />
+                用户统计
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-700">
+                      {userStats ? userStats[2].toString() : '0'}
+                    </div>
+                    <div className="text-blue-600">连续签到</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-700">
+                      {userStats ? userStats[5].toString() : '0'}
+                    </div>
+                    <div className="text-blue-600">铸造次数</div>
+                  </div>
+                </div>
+                <div className="text-center pt-2 border-t">
+                  <div className="text-lg font-bold text-blue-700">
+                    {userStats ? Number(formatEther(userStats[3])).toLocaleString() : '0'}
+                  </div>
+                  <div className="text-sm text-blue-600">累计获得 SHT</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 奖励功能区 */}
+      {isConnected ? (
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* 50 SHT空投 */}
+          <Card className="border-2 border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-700">
+                <Gift className="h-6 w-6" />
+                🎯 获得 50 SHT
+              </CardTitle>
+              <CardDescription className="text-red-600">
+                测试功能 - 立即获得50个SHT代币
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={handleAirdrop}
+                disabled={isPending || isConfirming}
+                size="lg"
+                className="w-full text-lg py-6"
+                variant="destructive"
+              >
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {isPending ? '发送中...' : '确认中...'}
+                  </>
+                ) : (
+                  <>
+                    <Gift className="mr-2 h-5 w-5" />
+                    🎁 立即获得 50 SHT
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* 每日签到 */}
+          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-700">
+                <CheckCircle className="h-6 w-6" />
+                每日签到
+              </CardTitle>
+              <CardDescription className="text-purple-600">
+                {canClaim ? '可以签到获得100 SHT + 连续奖励' : '今日已签到'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={handleDailyClaim}
+                disabled={isPending || isConfirming || !canClaim}
+                size="lg"
+                className="w-full"
+                variant={canClaim ? "default" : "secondary"}
+              >
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    处理中...
+                  </>
+                ) : canClaim ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    立即签到
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    今日已签到
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <Card className="border-2 border-gray-200">
+          <CardContent className="pt-6">
+            <div className="text-center text-gray-600 py-8">
+              <Gift className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <div className="font-medium text-lg mb-2">请先连接钱包</div>
+              <div className="text-sm">连接钱包后即可查看余额和获得SHT代币</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 交易状态显示 */}
+      {(isPending || isConfirming || isConfirmed || error) && (
+        <Card className={`border-2 ${
+          error ? 'border-red-200 bg-red-50' : 
+          isConfirmed ? 'border-green-200 bg-green-50' : 
+          'border-yellow-200 bg-yellow-50'
+        }`}>
+          <CardContent className="pt-6">
+            <div className="text-center space-y-2">
+              {isPending && (
+                <div className="text-yellow-700">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <div className="font-medium">📤 交易发送中</div>
+                  <div className="text-sm">请在钱包中确认交易...</div>
+                </div>
+              )}
+
+              {isConfirming && (
+                <div className="text-blue-700">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <div className="font-medium">⏳ 等待区块确认</div>
+                  <div className="text-sm">交易正在处理中...</div>
+                </div>
+              )}
+
+              {isConfirmed && (
+                <div className="text-green-700">
+                  <CheckCircle className="h-6 w-6 mx-auto mb-2" />
+                  <div className="font-medium">🎉 交易成功！</div>
+                  <div className="text-sm">代币已发送到你的钱包</div>
+                  {hash && (
+                    <div className="text-xs mt-2 font-mono bg-white p-2 rounded border">
+                      {hash.slice(0, 10)}...{hash.slice(-8)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {error && (
+                <div className="text-red-700">
+                  <AlertCircle className="h-6 w-6 mx-auto mb-2" />
+                  <div className="font-medium">❌ 交易失败</div>
+                  <div className="text-sm">
+                    {error.message.includes('User rejected') 
+                      ? '用户取消了交易' 
+                      : error.message.length > 100 
+                        ? error.message.slice(0, 100) + '...' 
+                        : error.message}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 系统状态 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>系统状态</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <Badge className="mb-1" variant={mounted ? "default" : "secondary"}>
+                {mounted ? '✅ 已加载' : '⏳ 加载中'}
+              </Badge>
+              <div className="text-muted-foreground">页面状态</div>
+            </div>
+            <div className="text-center">
+              <Badge className="mb-1" variant={isConnected ? "default" : "secondary"}>
+                {isConnected ? '✅ 已连接' : '❌ 未连接'}
+              </Badge>
+              <div className="text-muted-foreground">钱包状态</div>
+            </div>
+            <div className="text-center">
+              <Badge className="mb-1" variant={balanceLoading ? "secondary" : "default"}>
+                {balanceLoading ? '⏳ 加载中' : '✅ 已加载'}
+              </Badge>
+              <div className="text-muted-foreground">余额状态</div>
+            </div>
+            <div className="text-center">
+              <Badge className="mb-1" variant={isPending || isConfirming ? "secondary" : "default"}>
+                {isPending || isConfirming ? '⏳ 处理中' : '✅ 就绪'}
+              </Badge>
+              <div className="text-muted-foreground">交易状态</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 合约信息 */}
+      <Card className="bg-muted/30">
+        <CardHeader>
+          <CardTitle className="text-sm">合约信息</CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs space-y-2">
+          <div className="grid md:grid-cols-2 gap-2">
+            <div>
+              <span className="font-medium">SHT Token:</span>
+              <div className="font-mono text-muted-foreground break-all">
+                {SHT_TOKEN_ADDRESS}
+              </div>
+            </div>
+            <div>
+              <span className="font-medium">网络:</span> Sepolia 测试网
+            </div>
+            <div>
+              <span className="font-medium">功能:</span> 余额查询 + 空投 + 签到
+            </div>
+            <div>
+              <span className="font-medium">刷新:</span> 每5秒自动更新
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 使用说明 */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardContent className="pt-6">
+          <div className="text-blue-800">
+            <div className="font-medium text-lg mb-3">📋 使用说明</div>
+            <div className="text-sm space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">1</span>
+                <span>连接你的钱包 (确保切换到Sepolia测试网)</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">2</span>
+                <span>查看当前SHT代币余额和用户统计</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">3</span>
+                <span>点击"获得50 SHT"按钮进行测试空投</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">4</span>
+                <span>使用每日签到功能获得100 SHT + 连续奖励</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="bg-blue-200 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">5</span>
+                <span>在钱包中确认交易，等待区块确认</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

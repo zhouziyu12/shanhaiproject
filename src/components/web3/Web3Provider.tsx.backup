@@ -16,7 +16,7 @@ function getQueryClient() {
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
-          staleTime: 60 * 1000,
+          staleTime: 60 * 1000, // 1分钟
         },
       },
     });
@@ -35,6 +35,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     setMounted(true);
   }, []);
 
+  // 防止SSR问题
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
