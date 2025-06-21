@@ -8,16 +8,6 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'gateway.pinata.cloud',
-      },
-    ],
   },
   swcMinify: false,
 }
