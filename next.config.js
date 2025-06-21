@@ -8,11 +8,18 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['via.placeholder.com', 'gateway.pinata.cloud'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gateway.pinata.cloud',
+      },
+    ],
   },
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  swcMinify: false,
 }
 
 module.exports = nextConfig
