@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RARITY_CONFIG, getRarityInfo, type RarityLevel } from '@/config/rarity';
-import { useNFTData } from '@/hooks/useNFTData';
 
 interface RarityRevealProps {
   tokenId: number;
@@ -38,12 +37,56 @@ export function RarityReveal({
   onRevealComplete,
   onBack 
 }: RarityRevealProps) {
-  const { addNFT } = useNFTData();
   const [vrfStatus, setVrfStatus] = useState<VRFStatus>({ status: 'pending' });
   const [countdown, setCountdown] = useState(8);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealedRarity, setRevealedRarity] = useState<RarityLevel | null>(null);
   const [nftAddedToGallery, setNftAddedToGallery] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // 🔧 直接调用API添加NFT到数据库（替换useNFTData hook）
+  const addNFTToDatabase = async (nftData: any) => {
+    try {
+      console.log('📚 直接调用API添加NFT到数据库...', nftData);
+      
+      const response = await fetch('/api/nfts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokenId: nftData.tokenId,
+          name: `山海神兽 #${nftData.tokenId}`,
+          originalInput: nftData.originalInput,
+          optimizedPrompt: nftData.optimizedPrompt,
+          style: nftData.style,
+          creator: nftData.creator,
+          imageUrl: nftData.imageUrl,
+          ipfsImageUrl: nftData.ipfsImageUrl,
+          ipfsMetadataUrl: nftData.ipfsMetadataUrl,
+          gatewayImageUrl: nftData.gatewayImageUrl,
+          rarity: nftData.rarity,
+          vrfRequestId: nftData.vrfRequestId
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API调用失败: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'API返回失败状态');
+      }
+
+      console.log('✅ NFT成功添加到数据库:', result);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ 添加NFT到数据库失败:', error);
+      throw error;
+    }
+  };
 
   // 轮询VRF状态
   useEffect(() => {
@@ -80,7 +123,7 @@ export function RarityReveal({
               console.log('⭐ 设置揭晓稀有度:', data.rarity);
               setRevealedRarity(data.rarity);
               
-              // 关键：确保mintData存在且完整
+              // 🔧 关键修复：直接调用API而不依赖useNFTData hook
               if (mintData && !nftAddedToGallery) {
                 console.log('📚 准备添加NFT到图鉴...', {
                   tokenId,
@@ -89,8 +132,8 @@ export function RarityReveal({
                 });
 
                 try {
-                  // 调用addNFT函数
-                  await addNFT({
+                  // 🆕 直接调用数据库API
+                  await addNFTToDatabase({
                     tokenId,
                     originalInput: mintData.originalInput,
                     optimizedPrompt: mintData.optimizedPrompt,
@@ -105,6 +148,7 @@ export function RarityReveal({
                   });
                   
                   setNftAddedToGallery(true);
+                  setSaveError(null); // 清除之前的错误
                   console.log('✅ NFT已成功添加到图鉴！');
                   
                   // 触发成功事件
@@ -121,6 +165,7 @@ export function RarityReveal({
                   
                 } catch (error) {
                   console.error('❌ 添加NFT到图鉴失败:', error);
+                  setSaveError(error instanceof Error ? error.message : '未知错误');
                 }
               } else {
                 console.warn('⚠️ mintData缺失或NFT已添加:', { 
@@ -157,7 +202,40 @@ export function RarityReveal({
         clearInterval(pollInterval);
       }
     };
-  }, [vrfRequestId, isRevealing, revealedRarity, nftAddedToGallery, vrfStatus.status, mintData, addNFT, onRevealComplete, tokenId]);
+  }, [vrfRequestId, isRevealing, revealedRarity, nftAddedToGallery, vrfStatus.status, mintData, onRevealComplete, tokenId]);
+
+  // 手动保存NFT（备用方案）
+  const manualSaveNFT = async () => {
+    if (!mintData || revealedRarity === null) {
+      alert('缺少必要数据，无法保存');
+      return;
+    }
+
+    try {
+      setSaveError(null);
+      await addNFTToDatabase({
+        tokenId,
+        originalInput: mintData.originalInput,
+        optimizedPrompt: mintData.optimizedPrompt,
+        style: mintData.style,
+        creator: mintData.creator,
+        imageUrl: mintData.imageUrl,
+        ipfsImageUrl: mintData.ipfsImageUrl,
+        ipfsMetadataUrl: mintData.ipfsMetadataUrl,
+        gatewayImageUrl: mintData.gatewayImageUrl,
+        rarity: revealedRarity,
+        vrfRequestId: vrfRequestId
+      });
+      
+      setNftAddedToGallery(true);
+      alert('NFT已成功保存到图鉴！');
+      
+    } catch (error) {
+      console.error('手动保存失败:', error);
+      setSaveError(error instanceof Error ? error.message : '未知错误');
+      alert('保存失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
+  };
 
   // 倒计时效果
   useEffect(() => {
@@ -167,18 +245,30 @@ export function RarityReveal({
     }
   }, [countdown, vrfStatus.status]);
 
-  // 调试：输出当前状态
+  // 🐛 增强的调试信息
   useEffect(() => {
-    console.log('🐛 RarityReveal状态:', {
+    console.log('🐛 RarityReveal详细状态:', {
       tokenId,
       vrfRequestId,
       vrfStatus,
       isRevealing,
       revealedRarity,
       nftAddedToGallery,
-      hasMintData: !!mintData
+      saveError,
+      mintData: mintData ? {
+        hasAllRequiredFields: !!(
+          mintData.originalInput &&
+          mintData.optimizedPrompt &&
+          mintData.style &&
+          mintData.creator &&
+          mintData.imageUrl &&
+          mintData.ipfsImageUrl &&
+          mintData.ipfsMetadataUrl
+        ),
+        fields: Object.keys(mintData)
+      } : null
     });
-  }, [tokenId, vrfRequestId, vrfStatus, isRevealing, revealedRarity, nftAddedToGallery, mintData]);
+  }, [tokenId, vrfRequestId, vrfStatus, isRevealing, revealedRarity, nftAddedToGallery, saveError, mintData]);
 
   // 获取当前显示的稀有度信息
   const getRarityDisplay = () => {
@@ -200,6 +290,27 @@ export function RarityReveal({
         </h1>
         <p className="text-white/70">使用链上随机数确保公平稀有度</p>
       </div>
+
+      {/* 🚨 保存错误提示 */}
+      {saveError && (
+        <Card className="bg-red-500/10 border-red-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-red-400">
+                <div className="font-medium">❌ 保存到图鉴失败</div>
+                <div className="text-sm text-red-300/80">{saveError}</div>
+              </div>
+              <Button
+                onClick={manualSaveNFT}
+                className="bg-red-500 hover:bg-red-600 text-white"
+                size="sm"
+              >
+                重试保存
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* VRF状态卡片 */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
@@ -257,22 +368,27 @@ export function RarityReveal({
               </div>
             </div>
 
-            {/* 稀有度计算 */}
+            {/* 图鉴保存状态 */}
             <div className={`p-4 rounded-lg border ${
-              revealedRarity !== null ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/20'
+              nftAddedToGallery ? 'bg-green-500/10 border-green-500/30' : 
+              saveError ? 'bg-red-500/10 border-red-500/30' :
+              'bg-white/5 border-white/20'
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                  revealedRarity !== null ? 'bg-green-500' : 'bg-white/20'
+                  nftAddedToGallery ? 'bg-green-500' : 
+                  saveError ? 'bg-red-500' : 'bg-white/20'
                 }`}>
-                  <span className="text-white text-xs">{revealedRarity !== null ? '✓' : '3'}</span>
+                  <span className="text-white text-xs">
+                    {nftAddedToGallery ? '✓' : saveError ? '✗' : '3'}
+                  </span>
                 </div>
-                <span className="text-white font-medium">稀有度</span>
+                <span className="text-white font-medium">图鉴保存</span>
               </div>
               <div className="text-sm text-white/70">
-                {revealedRarity !== null ? 
-                  '⭐ 已计算完成' : 
-                  '等待稀有度计算'}
+                {nftAddedToGallery ? '✅ 已保存到图鉴' : 
+                 saveError ? '❌ 保存失败' :
+                 '等待保存到图鉴'}
               </div>
             </div>
           </div>
@@ -310,7 +426,7 @@ export function RarityReveal({
             <div className="text-xs text-white/60 space-y-1">
               <div>🐛 调试: VRF状态={vrfStatus.status}, 是否揭晓={isRevealing ? '是' : '否'}</div>
               <div>📊 稀有度={revealedRarity}, 已添加图鉴={nftAddedToGallery ? '是' : '否'}</div>
-              <div>📝 mintData={mintData ? '存在' : '缺失'}</div>
+              <div>📝 mintData={mintData ? '存在' : '缺失'}, 保存错误={saveError || '无'}</div>
             </div>
           </div>
         </CardContent>
@@ -400,6 +516,18 @@ export function RarityReveal({
                   <div className="text-green-300/80 text-sm">
                     ✅ 您的神兽已自动添加到图鉴中，可以前往查看！
                   </div>
+                </div>
+              ) : saveError ? (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 max-w-2xl mx-auto">
+                  <div className="text-red-400 text-sm font-medium mb-2">❌ 图鉴保存失败</div>
+                  <div className="text-red-300/80 text-sm mb-3">{saveError}</div>
+                  <Button
+                    onClick={manualSaveNFT}
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    size="sm"
+                  >
+                    手动保存到图鉴
+                  </Button>
                 </div>
               ) : (
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 max-w-2xl mx-auto">
