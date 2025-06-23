@@ -1,7 +1,7 @@
+import { prisma } from "@/lib/prisma";
 // app/api/vrf-request/route.ts - 修复BigInt序列化问题
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { prisma } from '../../../../lib/prisma';
 
 // 配置
 const SHANHAI_NFT_CONTRACT_ADDRESS = process.env.SHANHAI_NFT_CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_PROMPT_NFT_ADDRESS;
