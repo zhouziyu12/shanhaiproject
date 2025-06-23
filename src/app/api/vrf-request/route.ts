@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // 1. 从数据库获取记录
-    const vrfRequest = await prisma.vRFRequest.findUnique({
+    const vrfRequest = await prisma.vrfRequest.findUnique({
       where: { requestId }
     });
 
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       console.log('⭐ 链上稀有度已揭晓，更新数据库...');
       
       // 更新数据库
-      const updatedVRF = await prisma.vRFRequest.update({
+      const updatedVRF = await prisma.vrfRequest.update({
         where: { requestId },
         data: {
           status: 'fulfilled',
@@ -184,13 +184,13 @@ export async function POST(request: NextRequest) {
         // 直接创建已完成的记录
         const vrfRequestId = `vrf_${tokenId}_${Date.now()}_completed`;
         
-        await prisma.user.upsert({
+        await prisma.User.upsert({
           where: { address: requester.toLowerCase() },
           update: {},
           create: { address: requester.toLowerCase() }
         });
 
-        const vrfRequest = await prisma.vRFRequest.create({
+        const vrfRequest = await prisma.vrfRequest.create({
           data: {
             requestId: vrfRequestId,
             status: 'fulfilled',
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 保存pending记录的其余逻辑...
-    await prisma.user.upsert({
+    await prisma.User.upsert({
       where: { address: requester.toLowerCase() },
       update: {},
       create: { address: requester.toLowerCase() }
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
 
     const vrfRequestId = `vrf_${tokenId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-    const vrfRequest = await prisma.vRFRequest.create({
+    const vrfRequest = await prisma.vrfRequest.create({
       data: {
         requestId: vrfRequestId,
         status: 'pending',
