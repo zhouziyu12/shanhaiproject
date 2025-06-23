@@ -3,51 +3,51 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(cuid())
   address   String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
   @@map("users")
 }
 
 model NFT {
-  id                String   @id @default(cuid())
-  tokenId           BigInt   @unique
-  name              String
-  originalInput     String
-  optimizedPrompt   String
-  style             String
-  creator           String
-  imageUrl          String
-  ipfsImageUrl      String?
-  ipfsMetadataUrl   String?
-  gatewayImageUrl   String?
-  rarity            Int
-  rarityRevealed    Boolean  @default(false)
-  vrfRequestId      String?
-  mintedAt          DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id               String   @id @default(cuid())
+  tokenId          BigInt   @unique @map("tokenId")
+  name             String
+  originalInput    String   @map("originalInput")
+  optimizedPrompt  String   @map("optimizedPrompt")
+  style            String
+  creator          String
+  imageUrl         String   @map("imageUrl")
+  ipfsImageUrl     String?  @map("ipfsImageUrl")
+  ipfsMetadataUrl  String?  @map("ipfsMetadataUrl")
+  gatewayImageUrl  String?  @map("gatewayImageUrl")
+  rarity           Int
+  rarityRevealed   Boolean  @default(false) @map("rarityRevealed")
+  vrfRequestId     String?  @map("vrfRequestId")
+  mintedAt         DateTime @default(now()) @map("mintedAt")
+  createdAt        DateTime @default(now()) @map("createdAt")
+  updatedAt        DateTime @updatedAt @map("updatedAt")
+
   @@map("nfts")
 }
 
-model VRFRequest {
-  id          String   @id @default(cuid())
-  requestId   String   @unique
-  status      String
-  randomWord  BigInt?
-  rarity      Int?
-  tokenId     BigInt?
-  requester   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+model VrfRequest {
+  id         String   @id @default(cuid())
+  requestId  String   @unique @map("requestId")
+  status     String
+  randomWord BigInt?  @map("randomWord")
+  rarity     Int?
+  tokenId    BigInt?  @map("tokenId")
+  requester  String
+  createdAt  DateTime @default(now()) @map("createdAt")
+  updatedAt  DateTime @updatedAt @map("updatedAt")
+
   @@map("vrf_requests")
 }
