@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/components/web3/ConnectWallet';
 
-// 代币相关类型定义
+// Token-related type definitions
 export interface CheckInInfo {
   lastCheckInDay: number;
   consecutiveDays: number;
@@ -36,7 +36,7 @@ export function useTokenManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
-  // 从localStorage获取模拟数据
+  // Get simulated data from localStorage
   const getStoredTokenData = useCallback(() => {
     if (!address || typeof window === 'undefined') return null;
     
@@ -45,12 +45,12 @@ export function useTokenManagement() {
       const stored = localStorage.getItem(key);
       return stored ? JSON.parse(stored) : null;
     } catch (error) {
-      console.error('读取代币数据失败:', error);
+      console.error('Failed to read token data:', error);
       return null;
     }
   }, [address]);
 
-  // 保存模拟数据到localStorage
+  // Save simulated data to localStorage
   const saveTokenData = useCallback((data: any) => {
     if (!address || typeof window === 'undefined') return;
     
@@ -58,16 +58,16 @@ export function useTokenManagement() {
       const key = `sht_token_${address.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
-      console.error('保存代币数据失败:', error);
+      console.error('Failed to save token data:', error);
     }
   }, [address]);
 
-  // 获取当前日期（天数）
+  // Get current date (in days)
   const getCurrentDay = () => {
-    return Math.floor(Date.now() / 86400000); // 86400000ms = 1天
+    return Math.floor(Date.now() / 86400000); // 86400000ms = 1 day
   };
 
-  // 计算签到奖励
+  // Calculate check-in reward
   const calculateCheckInReward = (consecutiveDays: number): string => {
     const baseReward = 100; // 100 SHT
     const maxBonus = 7;
@@ -78,7 +78,7 @@ export function useTokenManagement() {
     return (baseReward + bonus).toString();
   };
 
-  // 加载代币数据
+  // Load token data
   const loadTokenData = useCallback(async () => {
     if (!isConnected || !address) {
       setTokenBalance('0');
@@ -89,17 +89,17 @@ export function useTokenManagement() {
     setIsLoading(true);
 
     try {
-      // 模拟从区块链读取数据
+      // Simulate reading data from blockchain
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       const storedData = getStoredTokenData();
       const currentDay = getCurrentDay();
 
       if (storedData) {
-        // 使用存储的数据
+        // Use stored data
         setTokenBalance(storedData.balance || '0');
         
-        // 检查是否可以签到
+        // Check if can check in
         const canCheckInNow = storedData.checkInData.lastCheckInDay < currentDay;
         const nextConsecutive = canCheckInNow ? 
           (storedData.checkInData.lastCheckInDay === currentDay - 1 ? storedData.checkInData.consecutiveDays + 1 : 1) : 
@@ -111,7 +111,7 @@ export function useTokenManagement() {
           nextReward: calculateCheckInReward(nextConsecutive)
         });
       } else {
-        // 初始化新用户数据
+        // Initialize new user data
         const initialData = {
           balance: '0',
           checkInData: {
@@ -129,13 +129,13 @@ export function useTokenManagement() {
         saveTokenData(initialData);
       }
     } catch (error) {
-      console.error('加载代币数据失败:', error);
+      console.error('Failed to load token data:', error);
     } finally {
       setIsLoading(false);
     }
   }, [isConnected, address, getStoredTokenData, saveTokenData]);
 
-  // 每日签到
+  // Daily check-in
   const dailyCheckIn = async (): Promise<boolean> => {
     if (!isConnected || !address || !checkInInfo?.canCheckInNow) {
       return false;
@@ -144,25 +144,25 @@ export function useTokenManagement() {
     setIsCheckingIn(true);
 
     try {
-      console.log('🎁 开始每日签到...');
+      console.log('🎁 Starting daily check-in...');
       
-      // 模拟区块链交易
+      // Simulate blockchain transaction
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const currentDay = getCurrentDay();
       const storedData = getStoredTokenData() || { balance: '0', checkInData: checkInInfo };
 
-      // 计算新的连续签到天数
+      // Calculate new consecutive days
       let newConsecutiveDays = 1;
       if (storedData.checkInData.lastCheckInDay === currentDay - 1) {
         newConsecutiveDays = storedData.checkInData.consecutiveDays + 1;
       }
 
-      // 计算奖励
+      // Calculate reward
       const reward = calculateCheckInReward(newConsecutiveDays);
       const newBalance = (parseFloat(storedData.balance) + parseFloat(reward)).toString();
 
-      // 更新数据
+      // Update data
       const newData = {
         balance: newBalance,
         checkInData: {
@@ -175,27 +175,27 @@ export function useTokenManagement() {
         }
       };
 
-      // 保存数据
+      // Save data
       saveTokenData(newData);
       setTokenBalance(newBalance);
       setCheckInInfo(newData.checkInData);
 
-      console.log('✅ 签到成功！获得', reward, 'SHT');
+      console.log('✅ Check-in successful! Earned', reward, 'SHT');
       return true;
 
     } catch (error) {
-      console.error('❌ 签到失败:', error);
+      console.error('❌ Check-in failed:', error);
       return false;
     } finally {
       setIsCheckingIn(false);
     }
   };
 
-  // 计算铸造折扣
+  // Calculate mint discount
   const calculateMintDiscount = (shtAmount: string): MintDiscountInfo => {
     const amount = parseFloat(shtAmount || '0');
-    const discountRate = 50; // 50 SHT = 1% 折扣
-    const maxDiscount = 90; // 最大90%折扣
+    const discountRate = 50; // 50 SHT = 1% discount
+    const maxDiscount = 90; // Maximum 90% discount
     
     if (amount === 0) {
       return {
@@ -220,7 +220,7 @@ export function useTokenManagement() {
     };
   };
 
-  // 使用代币进行铸造折扣
+  // Use tokens for mint discount
   const useMintDiscount = async (shtAmount: string): Promise<{ success: boolean; discountPercent: number }> => {
     if (!isConnected || !address) {
       return { success: false, discountPercent: 0 };
@@ -230,34 +230,34 @@ export function useTokenManagement() {
     const currentBalance = parseFloat(tokenBalance);
 
     if (amount > currentBalance) {
-      throw new Error('SHT余额不足');
+      throw new Error('Insufficient SHT balance');
     }
 
     try {
-      console.log('💰 使用SHT代币进行铸造折扣...', shtAmount);
+      console.log('💰 Using SHT tokens for mint discount...', shtAmount);
 
-      // 模拟区块链交易
+      // Simulate blockchain transaction
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       const discountInfo = calculateMintDiscount(shtAmount);
       const newBalance = (currentBalance - parseFloat(discountInfo.actualShtUsed)).toString();
 
-      // 更新余额
+      // Update balance
       const storedData = getStoredTokenData() || { balance: tokenBalance, checkInData: checkInInfo };
       storedData.balance = newBalance;
       saveTokenData(storedData);
       setTokenBalance(newBalance);
 
-      console.log('✅ 折扣使用成功！获得', discountInfo.discountPercent, '%折扣');
+      console.log('✅ Discount used successfully! Got', discountInfo.discountPercent, '% discount');
       return { success: true, discountPercent: discountInfo.discountPercent };
 
     } catch (error) {
-      console.error('❌ 使用折扣失败:', error);
+      console.error('❌ Failed to use discount:', error);
       throw error;
     }
   };
 
-  // 获取代币基本信息
+  // Get token basic information
   const getTokenInfo = (): TokenInfo => {
     return {
       name: 'ShanHaiToken',
@@ -270,18 +270,18 @@ export function useTokenManagement() {
     };
   };
 
-  // 格式化代币数量显示
+  // Format token amount display
   const formatTokenAmount = (amount: string, decimals: number = 2): string => {
     const num = parseFloat(amount || '0');
-    return num.toLocaleString('zh-CN', {
+    return num.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: decimals
     });
   };
 
-  // 调试函数
+  // Debug function
   const debugTokenData = () => {
-    console.log('🐛 SHT代币调试信息:', {
+    console.log('🐛 SHT token debug info:', {
       address,
       isConnected,
       tokenBalance,
@@ -291,7 +291,7 @@ export function useTokenManagement() {
     });
   };
 
-  // 清空代币数据（用于测试）
+  // Clear token data (for testing)
   const clearTokenData = () => {
     if (address) {
       const key = `sht_token_${address.toLowerCase()}`;
@@ -305,33 +305,33 @@ export function useTokenManagement() {
         canCheckInNow: true,
         nextReward: '100'
       });
-      console.log('🧹 代币数据已清空');
+      console.log('🧹 Token data cleared');
     }
   };
 
-  // 初始化加载
+  // Initialize loading
   useEffect(() => {
     loadTokenData();
   }, [loadTokenData]);
 
   return {
-    // 状态
+    // State
     tokenBalance,
     checkInInfo,
     isLoading,
     isCheckingIn,
     
-    // 操作函数
+    // Action functions
     dailyCheckIn,
     calculateMintDiscount,
     useMintDiscount,
     
-    // 工具函数
+    // Utility functions
     getTokenInfo,
     formatTokenAmount,
     loadTokenData,
     
-    // 调试函数
+    // Debug functions
     debugTokenData,
     clearTokenData
   };

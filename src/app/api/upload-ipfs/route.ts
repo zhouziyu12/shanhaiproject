@@ -10,14 +10,14 @@ interface UploadRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    // 添加请求体解析错误处理
+    // Add request body parsing error handling
     let body;
     try {
       body = await request.json();
     } catch (parseError) {
-      console.error('❌ 请求体解析失败:', parseError);
+      console.error('❌ Request body parsing failed:', parseError);
       return NextResponse.json({ 
-        error: '请求格式错误',
+        error: 'Request format error',
         details: 'Invalid JSON in request body'
       }, { status: 400 });
     }
@@ -32,20 +32,20 @@ export async function POST(request: NextRequest) {
 
     if (!imageUrl || !optimizedPrompt || !creator) {
       return NextResponse.json({ 
-        error: '缺少必要参数：图片URL、优化prompt或创建者地址' 
+        error: 'Missing required parameters: image URL, optimized prompt, or creator address' 
       }, { status: 400 });
     }
 
-    console.log('📤 开始Pinata IPFS上传流程...');
-    console.log('🎨 原始输入:', originalInput?.substring(0, 50) + '...');
-    console.log('✨ 优化prompt:', optimizedPrompt?.substring(0, 50) + '...');
+    console.log('📤 Starting Pinata IPFS upload workflow...');
+    console.log('🎨 Original input:', originalInput?.substring(0, 50) + '...');
+    console.log('✨ Optimized prompt:', optimizedPrompt?.substring(0, 50) + '...');
 
-    // 第一步：下载AI生成的图片
-    console.log('📥 下载AI生成的图片...');
+    // Step 1: Download AI-generated image
+    console.log('📥 Downloading AI-generated image...');
     const imageBuffer = await downloadImage(imageUrl);
     
-    // 第二步：创建完整的NFT元数据
-    console.log('📝 创建NFT元数据...');
+    // Step 2: Create complete NFT metadata
+    console.log('📝 Creating NFT metadata...');
     const metadata = createNFTMetadata({
       originalInput: originalInput || '',
       optimizedPrompt,
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
       imageId: generateImageId()
     });
 
-    // 第三步：上传到Pinata IPFS
-    console.log('🚀 上传到Pinata IPFS...');
+    // Step 3: Upload to Pinata IPFS
+    console.log('🚀 Uploading to Pinata IPFS...');
     const ipfsResult = await uploadToPinata(imageBuffer, metadata);
 
-    // 第四步：返回完整结果
+    // Step 4: Return complete result
     const result = {
       success: true,
       ipfs: ipfsResult,
@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
       originalInput: originalInput || '',
       optimizedPrompt,
       workflow: {
-        step1: '✅ 图片下载完成',
-        step2: '✅ 元数据创建完成', 
-        step3: '✅ Pinata IPFS上传完成',
-        step4: '✅ 准备铸造NFT'
+        step1: '✅ Image download completed',
+        step2: '✅ Metadata creation completed', 
+        step3: '✅ Pinata IPFS upload completed',
+        step4: '✅ Ready to mint NFT'
       },
       mintInfo: {
         tokenURI: ipfsResult.metadataUrl,
@@ -78,47 +78,47 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    console.log('🎉 Pinata IPFS上传流程完成!');
+    console.log('🎉 Pinata IPFS upload workflow completed!');
     return NextResponse.json(result);
 
   } catch (error) {
-    console.error('❌ Pinata IPFS上传失败:', error);
+    console.error('❌ Pinata IPFS upload failed:', error);
     
-    // 返回详细的错误信息
+    // Return detailed error information
     return NextResponse.json({
       success: false,
-      error: 'IPFS上传失败',
-      details: error instanceof Error ? error.message : '未知错误',
+      error: 'IPFS upload failed',
+      details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       workflow: {
-        step1: '❌ 处理中断',
-        step2: '⏸️ 未完成',
-        step3: '⏸️ 未完成',
-        step4: '⏸️ 未完成'
+        step1: '❌ Processing interrupted',
+        step2: '⏸️ Not completed',
+        step3: '⏸️ Not completed',
+        step4: '⏸️ Not completed'
       }
     }, { status: 500 });
   }
 }
 
-// Pinata IPFS上传函数
+// Pinata IPFS upload function
 async function uploadToPinata(imageBuffer: Buffer, metadata: any) {
-  console.log('🔄 开始Pinata IPFS上传...');
+  console.log('🔄 Starting Pinata IPFS upload...');
   
   try {
-    // 检查Pinata JWT Token
+    // Check Pinata JWT Token
     const pinataJWT = process.env.PINATA_JWT;
     if (!pinataJWT) {
-      throw new Error('PINATA_JWT环境变量未配置');
+      throw new Error('PINATA_JWT environment variable not configured');
     }
 
-    // 1. 上传图片到Pinata
-    console.log('📸 上传图片到Pinata...');
+    // 1. Upload image to Pinata
+    console.log('📸 Uploading image to Pinata...');
     
     const imageFormData = new FormData();
     const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
     imageFormData.append('file', imageBlob, 'beast.png');
     
-    // 添加Pinata选项
+    // Add Pinata options
     const pinataImageOptions = JSON.stringify({
       cidVersion: 1,
       customPinPolicy: {
@@ -149,21 +149,21 @@ async function uploadToPinata(imageBuffer: Buffer, metadata: any) {
 
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text();
-      console.error('Pinata图片上传失败:', imageResponse.status, errorText);
-      throw new Error(`Pinata图片上传失败: ${imageResponse.status} - ${errorText}`);
+      console.error('Pinata image upload failed:', imageResponse.status, errorText);
+      throw new Error(`Pinata image upload failed: ${imageResponse.status} - ${errorText}`);
     }
 
     const imageResult = await imageResponse.json();
     const imageCid = imageResult.IpfsHash;
     const imageIpfsUrl = `ipfs://${imageCid}`;
     
-    console.log('✅ 图片上传成功到Pinata, CID:', imageCid);
+    console.log('✅ Image successfully uploaded to Pinata, CID:', imageCid);
 
-    // 2. 更新元数据中的图片URL
+    // 2. Update image URL in metadata
     metadata.image = imageIpfsUrl;
 
-    // 3. 上传元数据到Pinata
-    console.log('📄 上传元数据到Pinata...');
+    // 3. Upload metadata to Pinata
+    console.log('📄 Uploading metadata to Pinata...');
     
     const metadataResponse = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
       method: 'POST',
@@ -194,16 +194,16 @@ async function uploadToPinata(imageBuffer: Buffer, metadata: any) {
 
     if (!metadataResponse.ok) {
       const errorText = await metadataResponse.text();
-      console.error('Pinata元数据上传失败:', metadataResponse.status, errorText);
-      throw new Error(`Pinata元数据上传失败: ${metadataResponse.status} - ${errorText}`);
+      console.error('Pinata metadata upload failed:', metadataResponse.status, errorText);
+      throw new Error(`Pinata metadata upload failed: ${metadataResponse.status} - ${errorText}`);
     }
 
     const metadataResult = await metadataResponse.json();
     const metadataCid = metadataResult.IpfsHash;
     
-    console.log('✅ 元数据上传成功到Pinata, CID:', metadataCid);
+    console.log('✅ Metadata successfully uploaded to Pinata, CID:', metadataCid);
     
-    // 4. 返回结果
+    // 4. Return result
     return {
       imageUrl: imageIpfsUrl,
       metadataUrl: `ipfs://${metadataCid}`,
@@ -223,31 +223,31 @@ async function uploadToPinata(imageBuffer: Buffer, metadata: any) {
     };
 
   } catch (error) {
-    console.error('Pinata IPFS上传错误:', error);
+    console.error('Pinata IPFS upload error:', error);
     throw error;
   }
 }
 
-// 下载图片
+// Download image
 async function downloadImage(imageUrl: string): Promise<Buffer> {
   try {
-    console.log('🔗 从URL下载图片:', imageUrl);
+    console.log('🔗 Downloading image from URL:', imageUrl);
     const response = await fetch(imageUrl);
     if (!response.ok) {
-      throw new Error(`图片下载失败: ${response.status} - ${response.statusText}`);
+      throw new Error(`Image download failed: ${response.status} - ${response.statusText}`);
     }
     
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    console.log('✅ 图片下载完成, 大小:', Math.round(buffer.length / 1024), 'KB');
+    console.log('✅ Image download completed, size:', Math.round(buffer.length / 1024), 'KB');
     return buffer;
   } catch (error) {
-    console.error('图片下载错误:', error);
-    throw new Error(`无法下载AI生成的图片: ${error instanceof Error ? error.message : '未知错误'}`);
+    console.error('Image download error:', error);
+    throw new Error(`Unable to download AI-generated image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-// 创建NFT元数据
+// Create NFT metadata
 function createNFTMetadata({
   originalInput,
   optimizedPrompt,
@@ -262,51 +262,51 @@ function createNFTMetadata({
   imageId: string;
 }) {
   const styleNames = {
-    classic: '古典水墨',
-    modern: '现代插画',
-    fantasy: '奇幻艺术',
-    ink: '水墨写意'
+    classic: 'Classical Ink Wash',
+    modern: 'Modern Illustration',
+    fantasy: 'Fantasy Art',
+    ink: 'Ink Wash Freehand'
   };
 
   const beastName = generateBeastName(originalInput);
   
   return {
-    name: `山海神兽 · ${beastName}`,
-    description: `${optimizedPrompt}\n\n====== 创作信息 ======\n✨ 原始灵感：${originalInput}\n🎨 艺术风格：${styleNames[style as keyof typeof styleNames] || style}\n🎲 稀有度：待VRF分配\n🏛️ 项目：神图计划 ShanHaiVerse\n🤖 AI技术：DeepSeek + 智谱AI\n💾 存储：Pinata IPFS\n⏰ 创作时间：${new Date().toLocaleString('zh-CN')}\n\n这是通过AI技术重新演绎的山海经神兽，融合了传统文化与现代科技，每一只都是独一无二的数字艺术品。`,
+    name: `Shan Hai Mythical Beast · ${beastName}`,
+    description: `${optimizedPrompt}\n\n====== Creation Information ======\n✨ Original Inspiration: ${originalInput}\n🎨 Art Style: ${styleNames[style as keyof typeof styleNames] || style}\n🎲 Rarity: Awaiting VRF allocation\n🏛️ Project: ShenTu Plan ShanHaiVerse\n🤖 AI Technology: DeepSeek + Zhipu AI\n💾 Storage: Pinata IPFS\n⏰ Creation Time: ${new Date().toLocaleString('en-US')}\n\nThis is a Shan Hai Jing mythical beast reinterpreted through AI technology, blending traditional culture with modern technology. Each one is a unique digital artwork.`,
     image: '',
     external_url: 'https://shanhaiverse.com',
     background_color: '7c3aed',
     attributes: [
       {
-        trait_type: '艺术风格',
+        trait_type: 'Art Style',
         value: styleNames[style as keyof typeof styleNames] || style
       },
       {
-        trait_type: '创作者',
+        trait_type: 'Creator',
         value: creator
       },
       {
-        trait_type: '生成方式',
-        value: 'AI生成'
+        trait_type: 'Generation Method',
+        value: 'AI Generated'
       },
       {
-        trait_type: 'AI模型',
-        value: 'DeepSeek + 智谱AI'
+        trait_type: 'AI Model',
+        value: 'DeepSeek + Zhipu AI'
       },
       {
-        trait_type: '存储方式',
+        trait_type: 'Storage Method',
         value: 'Pinata IPFS'
       },
       {
-        trait_type: '创作时间',
+        trait_type: 'Creation Date',
         value: new Date().toISOString().split('T')[0]
       },
       {
-        trait_type: '项目版本',
+        trait_type: 'Project Version',
         value: 'V1.0'
       },
       {
-        trait_type: '图片ID',
+        trait_type: 'Image ID',
         value: imageId
       }
     ],
@@ -319,7 +319,7 @@ function createNFTMetadata({
       generatedAt: new Date().toISOString(),
       aiWorkflow: {
         promptOptimizer: 'DeepSeek',
-        imageGenerator: '智谱AI',
+        imageGenerator: 'Zhipu AI',
         storage: 'Pinata IPFS',
         version: '1.0.0'
       }
@@ -327,10 +327,10 @@ function createNFTMetadata({
   };
 }
 
-// 生成神兽名称
+// Generate beast name
 function generateBeastName(input: string): string {
-  const prefixes = ['天', '玄', '神', '灵', '圣', '仙', '古', '幻', '紫', '金'];
-  const suffixes = ['龙', '凤', '麟', '虎', '狮', '鹏', '鹰', '狐', '龟', '蛇'];
+  const prefixes = ['Sky', 'Mystic', 'Divine', 'Spirit', 'Sacred', 'Immortal', 'Ancient', 'Phantom', 'Purple', 'Golden'];
+  const suffixes = ['Dragon', 'Phoenix', 'Qilin', 'Tiger', 'Lion', 'Roc', 'Eagle', 'Fox', 'Turtle', 'Serpent'];
   
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
@@ -343,7 +343,7 @@ function generateBeastName(input: string): string {
   return `${prefix}${suffix}`;
 }
 
-// 辅助函数
+// Helper functions
 function generateImageId(): string {
   return `img_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 }

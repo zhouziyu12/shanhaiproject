@@ -4,7 +4,7 @@ import { Web3Provider } from '@/components/web3/Web3Provider';
 import { Navigation } from '@/components/layout/Navigation';
 import './globals.css';
 
-// 字体配置 - 使用更现代的字体组合
+// Font configuration - Using modern font combinations
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
@@ -18,17 +18,17 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: '神图计划 ShanHaiVerse - Next Generation AI-Powered Mythical Beast Creation Platform',
-  description: '体验下一代AI驱动的山海神兽创作平台。DeepSeek + 智谱AI双重技术，Chainlink VRF公平稀有度，IPFS永久存储。Where ancient mythology meets cutting-edge technology.',
-  keywords: ['NFT', 'AI', '山海经', '神兽', '区块链', 'DeepSeek', '智谱AI', 'Chainlink VRF', 'IPFS', 'Web3'],
+  title: 'ShenTu Plan ShanHaiVerse - Next Generation AI-Powered Mythical Beast Creation Platform',
+  description: 'Experience the next-generation AI-driven mythical beast creation platform. Dual AI technology with DeepSeek + Zhipu AI, Chainlink VRF for fair rarity, IPFS permanent storage. Where ancient mythology meets cutting-edge technology.',
+  keywords: ['NFT', 'AI', 'Shan Hai Jing', 'Mythical Beasts', 'Blockchain', 'DeepSeek', 'Zhipu AI', 'Chainlink VRF', 'IPFS', 'Web3'],
   openGraph: {
-    title: '神图计划 ShanHaiVerse',
+    title: 'ShenTu Plan ShanHaiVerse',
     description: 'Next Generation AI-Powered Mythical Beast Creation Platform',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: '神图计划 ShanHaiVerse',
+    title: 'ShenTu Plan ShanHaiVerse',
     description: 'Next Generation AI-Powered Mythical Beast Creation Platform',
   },
   viewport: 'width=device-width, initial-scale=1',
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -49,12 +49,12 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <Web3Provider>
           <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
-            {/* 全局背景效果 */}
+            {/* Global background effects */}
             <div className="fixed inset-0 pointer-events-none z-0">
-              {/* 主背景渐变 */}
+              {/* Main background gradient */}
               <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
               
-              {/* 动态网格背景 */}
+              {/* Dynamic grid background */}
               <div 
                 className="absolute inset-0 opacity-[0.02]"
                 style={{
@@ -66,7 +66,7 @@ export default function RootLayout({
                 }}
               />
               
-              {/* 噪点纹理 */}
+              {/* Noise texture */}
               <div 
                 className="absolute inset-0 opacity-[0.015]"
                 style={{
@@ -74,22 +74,22 @@ export default function RootLayout({
                 }}
               />
 
-              {/* 环境光效 */}
+              {/* Ambient lighting effects */}
               <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/3 rounded-full blur-3xl animate-pulse" />
               <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/3 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
             </div>
 
-            {/* 导航栏 */}
+            {/* Navigation bar */}
             <div className="relative z-50">
               <Navigation />
             </div>
             
-            {/* 主要内容 */}
+            {/* Main content */}
             <main className="relative z-10">
               {children}
             </main>
 
-            {/* 全局光标跟踪效果 */}
+            {/* Global cursor tracking effect */}
             <div 
               id="cursor-glow"
               className="fixed pointer-events-none z-30 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl transition-all duration-300 ease-out opacity-0"
@@ -98,7 +98,7 @@ export default function RootLayout({
           </div>
         </Web3Provider>
 
-        {/* 光标跟踪脚本 */}
+        {/* Cursor tracking script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -112,7 +112,7 @@ export default function RootLayout({
                   cursorGlow = document.getElementById('cursor-glow');
                   if (!cursorGlow) return;
 
-                  // 检测是否为触摸设备
+                  // Detect if it's a touch device
                   isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                   
                   if (isTouch) {

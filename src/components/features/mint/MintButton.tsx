@@ -29,39 +29,39 @@ export function MintButton({
   onClick,
   disabled = false,
   loading = false,
-  loadingText = '铸造中...',
-  estimatedFee = '免费',
-  estimatedTime = '1-2分钟'
+  loadingText = 'Minting...',
+  estimatedFee = 'Free',
+  estimatedTime = '1-2 minutes'
 }: MintButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div className="space-y-4">
-      {/* 铸造信息卡片 */}
+      {/* Minting Information Card */}
       <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
         <CardContent className="p-4">
           <div className="space-y-3">
             <h4 className="font-medium text-white flex items-center gap-2">
               <Shield className="h-4 w-4 text-green-400" />
-              铸造信息
+              Minting Information
             </h4>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
-                <div className="text-white/60">铸造费用</div>
+                <div className="text-white/60">Minting Fee</div>
                 <div className="flex items-center gap-1 text-white">
                   <Coins className="h-3 w-3 text-green-400" />
                   <span className="font-medium">{estimatedFee}</span>
-                  {estimatedFee === '免费' && (
+                  {estimatedFee === 'Free' && (
                     <Badge variant="success" className="text-xs ml-1">
-                      限时免费
+                      Limited Time
                     </Badge>
                   )}
                 </div>
               </div>
               
               <div className="space-y-1">
-                <div className="text-white/60">预计时间</div>
+                <div className="text-white/60">Estimated Time</div>
                 <div className="flex items-center gap-1 text-white">
                   <Clock className="h-3 w-3 text-blue-400" />
                   <span className="font-medium">{estimatedTime}</span>
@@ -72,22 +72,22 @@ export function MintButton({
             <div className="space-y-2 text-xs text-white/70">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-3 w-3 text-green-400" />
-                <span>图片和元数据将永久存储在IPFS</span>
+                <span>Images and metadata will be permanently stored on IPFS</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-3 w-3 text-green-400" />
-                <span>铸造成功后获得50 SHT代币奖励</span>
+                <span>Receive 50 SHT token rewards after successful minting</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-3 w-3 text-green-400" />
-                <span>稀有度由VRF随机确定，公平公正</span>
+                <span>Rarity determined by VRF randomness, fair and transparent</span>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 主要铸造按钮 */}
+      {/* Main Mint Button */}
       <Button
         onClick={onClick}
         disabled={disabled || loading}
@@ -103,13 +103,13 @@ export function MintButton({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* 背景动效 */}
+        {/* Background animation */}
         <div className={cn(
           "absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 transition-opacity duration-300",
           isHovered && !loading && !disabled && "opacity-20"
         )} />
         
-        {/* 按钮内容 */}
+        {/* Button content */}
         <div className="relative flex items-center justify-center gap-3">
           {loading ? (
             <>
@@ -119,55 +119,55 @@ export function MintButton({
           ) : (
             <>
               <Upload className="h-5 w-5" />
-              <span>铸造神兽NFT</span>
+              <span>Mint Beast NFT</span>
               <Zap className="h-4 w-4 text-yellow-300" />
             </>
           )}
         </div>
 
-        {/* 成功动效 */}
+        {/* Success animation */}
         {loading && (
           <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20 animate-pulse" />
         )}
       </Button>
 
-      {/* 风险提示 */}
+      {/* Risk Notice */}
       <Card className="bg-yellow-500/10 border-yellow-500/20">
         <CardContent className="p-3">
           <div className="flex items-start gap-2 text-xs">
             <AlertCircle className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
             <div className="space-y-1 text-yellow-200/80">
-              <div className="font-medium">铸造须知</div>
-              <div>• 铸造过程不可逆，请确保AI生成的图片符合预期</div>
-              <div>• 稀有度将在铸造后随机确定，无法人为干预</div>
-              <div>• 请确保钱包中有足够的ETH支付gas费用</div>
-              <div>• 铸造成功后NFT将立即出现在你的钱包中</div>
+              <div className="font-medium">Minting Guidelines</div>
+              <div>• Minting process is irreversible, please ensure the AI-generated image meets expectations</div>
+              <div>• Rarity will be randomly determined after minting, cannot be manually influenced</div>
+              <div>• Please ensure your wallet has sufficient ETH to pay gas fees</div>
+              <div>• NFT will appear in your wallet immediately after successful minting</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 加载状态额外信息 */}
+      {/* Additional Loading State Information */}
       {loading && (
         <Card className="bg-blue-500/10 border-blue-500/20">
           <CardContent className="p-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-blue-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="font-medium">铸造进行中...</span>
+                <span className="font-medium">Minting in Progress...</span>
               </div>
               
               <div className="space-y-2 text-sm text-blue-200/80">
-                <div>🔄 正在处理交易，请勿关闭页面</div>
-                <div>⏳ 区块链确认需要一些时间，请耐心等待</div>
-                <div>🎯 稀有度将在确认后自动分配</div>
+                <div>🔄 Transaction processing, please do not close this page</div>
+                <div>⏳ Blockchain confirmation takes time, please be patient</div>
+                <div>🎯 Rarity will be automatically assigned after confirmation</div>
               </div>
 
-              {/* 进度动画 */}
+              {/* Progress animation */}
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-blue-300">
-                  <span>处理进度</span>
-                  <span>确认中...</span>
+                  <span>Processing Progress</span>
+                  <span>Confirming...</span>
                 </div>
                 <div className="w-full bg-blue-500/20 rounded-full h-1">
                   <div className="bg-gradient-to-r from-blue-400 to-blue-500 h-1 rounded-full animate-pulse w-3/4"></div>

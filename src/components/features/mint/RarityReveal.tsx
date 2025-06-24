@@ -44,17 +44,17 @@ export function RarityReveal({
   const [nftAddedToGallery, setNftAddedToGallery] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // 🔧 直接调用API添加NFT到数据库（替换useNFTData hook）
+  // 🔧 Directly call API to add NFT to database (replacing useNFTData hook)
   const addNFTToDatabase = async (nftData: any) => {
     try {
-      console.log('📚 直接调用API添加NFT到数据库...', nftData);
+      console.log('📚 Directly calling API to add NFT to database...', nftData);
       
       const response = await fetch('/api/nfts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tokenId: nftData.tokenId,
-          name: `山海神兽 #${nftData.tokenId}`,
+          name: `Shan Hai Beast #${nftData.tokenId}`,
           originalInput: nftData.originalInput,
           optimizedPrompt: nftData.optimizedPrompt,
           style: nftData.style,
@@ -70,35 +70,35 @@ export function RarityReveal({
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API调用失败: ${response.status} ${errorText}`);
+        throw new Error(`API call failed: ${response.status} ${errorText}`);
       }
 
       const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || 'API返回失败状态');
+        throw new Error(result.error || 'API returned failure status');
       }
 
-      console.log('✅ NFT成功添加到数据库:', result);
+      console.log('✅ NFT successfully added to database:', result);
       return result;
       
     } catch (error) {
-      console.error('❌ 添加NFT到数据库失败:', error);
+      console.error('❌ Failed to add NFT to database:', error);
       throw error;
     }
   };
 
-  // 轮询VRF状态
+  // Poll VRF status
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
 
     const pollVRFStatus = async () => {
       try {
-        console.log('🔄 轮询VRF状态...', vrfRequestId);
+        console.log('🔄 Polling VRF status...', vrfRequestId);
         const response = await fetch(`/api/vrf-request?requestId=${vrfRequestId}`);
         const data = await response.json();
         
-        console.log('📊 VRF状态响应:', data);
+        console.log('📊 VRF status response:', data);
         
         if (data.success) {
           setVrfStatus({
@@ -108,9 +108,9 @@ export function RarityReveal({
             error: data.error
           });
 
-          // 如果VRF已履行且还没有开始揭晓
+          // If VRF is fulfilled and reveal hasn't started yet
           if (data.status === 'fulfilled' && !isRevealing && revealedRarity === null) {
-            console.log('🎲 VRF已完成，开始揭晓流程...', {
+            console.log('🎲 VRF completed, starting reveal process...', {
               tokenId,
               rarity: data.rarity,
               randomWord: data.randomWord
@@ -118,21 +118,21 @@ export function RarityReveal({
 
             setIsRevealing(true);
             
-            // 2秒后显示稀有度并添加到图鉴
+            // Show rarity and add to gallery after 2 seconds
             setTimeout(async () => {
-              console.log('⭐ 设置揭晓稀有度:', data.rarity);
+              console.log('⭐ Setting revealed rarity:', data.rarity);
               setRevealedRarity(data.rarity);
               
-              // 🔧 关键修复：直接调用API而不依赖useNFTData hook
+              // 🔧 Critical fix: Call API directly instead of relying on useNFTData hook
               if (mintData && !nftAddedToGallery) {
-                console.log('📚 准备添加NFT到图鉴...', {
+                console.log('📚 Preparing to add NFT to gallery...', {
                   tokenId,
                   rarity: data.rarity,
                   mintData: mintData
                 });
 
                 try {
-                  // 🆕 直接调用数据库API
+                  // 🆕 Call database API directly
                   await addNFTToDatabase({
                     tokenId,
                     originalInput: mintData.originalInput,
@@ -148,10 +148,10 @@ export function RarityReveal({
                   });
                   
                   setNftAddedToGallery(true);
-                  setSaveError(null); // 清除之前的错误
-                  console.log('✅ NFT已成功添加到图鉴！');
+                  setSaveError(null); // Clear previous errors
+                  console.log('✅ NFT successfully added to gallery!');
                   
-                  // 触发成功事件
+                  // Trigger success event
                   if (typeof window !== 'undefined') {
                     const event = new CustomEvent('nftMintedAndAddedToGallery', {
                       detail: {
@@ -164,35 +164,35 @@ export function RarityReveal({
                   }
                   
                 } catch (error) {
-                  console.error('❌ 添加NFT到图鉴失败:', error);
-                  setSaveError(error instanceof Error ? error.message : '未知错误');
+                  console.error('❌ Failed to add NFT to gallery:', error);
+                  setSaveError(error instanceof Error ? error.message : 'Unknown error');
                 }
               } else {
-                console.warn('⚠️ mintData缺失或NFT已添加:', { 
+                console.warn('⚠️ mintData missing or NFT already added:', { 
                   hasMintData: !!mintData, 
                   alreadyAdded: nftAddedToGallery 
                 });
               }
               
-              // 通知父组件
+              // Notify parent component
               onRevealComplete?.(data.rarity);
             }, 2000);
 
-            // 清除轮询
+            // Clear polling
             if (pollInterval) {
               clearInterval(pollInterval);
             }
           }
         }
       } catch (error) {
-        console.error('❌ 轮询VRF状态失败:', error);
+        console.error('❌ Failed to poll VRF status:', error);
       }
     };
 
-    // 立即执行一次
+    // Execute immediately once
     pollVRFStatus();
 
-    // 每2秒轮询一次（仅当状态为pending时）
+    // Poll every 2 seconds (only when status is pending)
     if (vrfStatus.status === 'pending') {
       pollInterval = setInterval(pollVRFStatus, 2000);
     }
@@ -204,10 +204,10 @@ export function RarityReveal({
     };
   }, [vrfRequestId, isRevealing, revealedRarity, nftAddedToGallery, vrfStatus.status, mintData, onRevealComplete, tokenId]);
 
-  // 手动保存NFT（备用方案）
+  // Manual save NFT (backup solution)
   const manualSaveNFT = async () => {
     if (!mintData || revealedRarity === null) {
-      alert('缺少必要数据，无法保存');
+      alert('Missing required data, cannot save');
       return;
     }
 
@@ -228,16 +228,16 @@ export function RarityReveal({
       });
       
       setNftAddedToGallery(true);
-      alert('NFT已成功保存到图鉴！');
+      alert('NFT successfully saved to gallery!');
       
     } catch (error) {
-      console.error('手动保存失败:', error);
-      setSaveError(error instanceof Error ? error.message : '未知错误');
-      alert('保存失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      console.error('Manual save failed:', error);
+      setSaveError(error instanceof Error ? error.message : 'Unknown error');
+      alert('Save failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
-  // 倒计时效果
+  // Countdown effect
   useEffect(() => {
     if (vrfStatus.status === 'pending' && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -245,9 +245,9 @@ export function RarityReveal({
     }
   }, [countdown, vrfStatus.status]);
 
-  // 🐛 增强的调试信息
+  // 🐛 Enhanced debug information
   useEffect(() => {
-    console.log('🐛 RarityReveal详细状态:', {
+    console.log('🐛 RarityReveal detailed state:', {
       tokenId,
       vrfRequestId,
       vrfStatus,
@@ -270,7 +270,7 @@ export function RarityReveal({
     });
   }, [tokenId, vrfRequestId, vrfStatus, isRevealing, revealedRarity, nftAddedToGallery, saveError, mintData]);
 
-  // 获取当前显示的稀有度信息
+  // Get current rarity display information
   const getRarityDisplay = () => {
     if (revealedRarity !== null) {
       return getRarityInfo(revealedRarity);
@@ -282,22 +282,22 @@ export function RarityReveal({
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* 标题 */}
+      {/* Title */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
           <span className="text-2xl">🎲</span>
-          Chainlink VRF 稀有度分配
+          Chainlink VRF Rarity Assignment
         </h1>
-        <p className="text-white/70">使用链上随机数确保公平稀有度</p>
+        <p className="text-white/70">Using on-chain random numbers to ensure fair rarity</p>
       </div>
 
-      {/* 🚨 保存错误提示 */}
+      {/* 🚨 Save Error Alert */}
       {saveError && (
         <Card className="bg-red-500/10 border-red-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-red-400">
-                <div className="font-medium">❌ 保存到图鉴失败</div>
+                <div className="font-medium">❌ Failed to save to gallery</div>
                 <div className="text-sm text-red-300/80">{saveError}</div>
               </div>
               <Button
@@ -305,24 +305,24 @@ export function RarityReveal({
                 className="bg-red-500 hover:bg-red-600 text-white"
                 size="sm"
               >
-                重试保存
+                Retry Save
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* VRF状态卡片 */}
+      {/* VRF Status Card */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <span className="text-xl">⚡</span>
-            Chainlink VRF 状态
+            Chainlink VRF Status
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* VRF请求状态 */}
+            {/* VRF Request Status */}
             <div className={`p-4 rounded-lg border ${
               vrfStatus.status === 'fulfilled' ? 'bg-green-500/10 border-green-500/30' : 
               vrfStatus.status === 'failed' ? 'bg-red-500/10 border-red-500/30' :
@@ -340,16 +340,16 @@ export function RarityReveal({
                 ) : (
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 )}
-                <span className="text-white font-medium">VRF请求</span>
+                <span className="text-white font-medium">VRF Request</span>
               </div>
               <div className="text-sm text-white/70">
-                {vrfStatus.status === 'fulfilled' ? '✅ 随机数已生成' :
-                 vrfStatus.status === 'failed' ? '❌ 请求失败' :
-                 `🔄 等待Chainlink节点响应... ${countdown}s`}
+                {vrfStatus.status === 'fulfilled' ? '✅ Random number generated' :
+                 vrfStatus.status === 'failed' ? '❌ Request failed' :
+                 `🔄 Waiting for Chainlink node response... ${countdown}s`}
               </div>
             </div>
 
-            {/* 随机数生成 */}
+            {/* Random Number Generation */}
             <div className={`p-4 rounded-lg border ${
               vrfStatus.randomWord ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/20'
             }`}>
@@ -359,16 +359,16 @@ export function RarityReveal({
                 }`}>
                   <span className="text-white text-xs">{vrfStatus.randomWord ? '✓' : '2'}</span>
                 </div>
-                <span className="text-white font-medium">随机数</span>
+                <span className="text-white font-medium">Random Number</span>
               </div>
               <div className="text-sm text-white/70">
                 {vrfStatus.randomWord ? 
                   `🎲 ${vrfStatus.randomWord}` : 
-                  '等待链上随机数'}
+                  'Waiting for on-chain random number'}
               </div>
             </div>
 
-            {/* 图鉴保存状态 */}
+            {/* Gallery Save Status */}
             <div className={`p-4 rounded-lg border ${
               nftAddedToGallery ? 'bg-green-500/10 border-green-500/30' : 
               saveError ? 'bg-red-500/10 border-red-500/30' :
@@ -383,17 +383,17 @@ export function RarityReveal({
                     {nftAddedToGallery ? '✓' : saveError ? '✗' : '3'}
                   </span>
                 </div>
-                <span className="text-white font-medium">图鉴保存</span>
+                <span className="text-white font-medium">Gallery Save</span>
               </div>
               <div className="text-sm text-white/70">
-                {nftAddedToGallery ? '✅ 已保存到图鉴' : 
-                 saveError ? '❌ 保存失败' :
-                 '等待保存到图鉴'}
+                {nftAddedToGallery ? '✅ Saved to gallery' : 
+                 saveError ? '❌ Save failed' :
+                 'Waiting to save to gallery'}
               </div>
             </div>
           </div>
 
-          {/* VRF请求详情 */}
+          {/* VRF Request Details */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -408,39 +408,39 @@ export function RarityReveal({
               </div>
               {vrfStatus.randomWord && (
                 <div>
-                  <span className="text-white/60">随机数:</span>
+                  <span className="text-white/60">Random Number:</span>
                   <span className="text-white ml-2 font-mono">{vrfStatus.randomWord}</span>
                 </div>
               )}
               {revealedRarity !== null && (
                 <div>
-                  <span className="text-white/60">稀有度等级:</span>
+                  <span className="text-white/60">Rarity Level:</span>
                   <span className="text-white ml-2">{revealedRarity}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 调试信息显示 */}
+          {/* Debug Information Display */}
           <div className="bg-black/20 border border-white/10 rounded-lg p-3">
             <div className="text-xs text-white/60 space-y-1">
-              <div>🐛 调试: VRF状态={vrfStatus.status}, 是否揭晓={isRevealing ? '是' : '否'}</div>
-              <div>📊 稀有度={revealedRarity}, 已添加图鉴={nftAddedToGallery ? '是' : '否'}</div>
-              <div>📝 mintData={mintData ? '存在' : '缺失'}, 保存错误={saveError || '无'}</div>
+              <div>🐛 Debug: VRF Status={vrfStatus.status}, Is Revealing={isRevealing ? 'Yes' : 'No'}</div>
+              <div>📊 Rarity={revealedRarity}, Added to Gallery={nftAddedToGallery ? 'Yes' : 'No'}</div>
+              <div>📝 mintData={mintData ? 'Exists' : 'Missing'}, Save Error={saveError || 'None'}</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 稀有度揭晓区域 */}
+      {/* Rarity Reveal Area */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardContent className="p-8">
           {!isRevealing && vrfStatus.status === 'pending' && (
             <div className="text-center space-y-6">
               <div className="text-6xl animate-pulse">🎲</div>
-              <h3 className="text-2xl font-bold text-white">正在生成稀有度...</h3>
+              <h3 className="text-2xl font-bold text-white">Generating Rarity...</h3>
               <div className="space-y-2">
-                <p className="text-white/70">Chainlink VRF正在生成真正的随机数</p>
+                <p className="text-white/70">Chainlink VRF is generating true random numbers</p>
                 <div className="flex justify-center gap-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -448,9 +448,9 @@ export function RarityReveal({
                 </div>
               </div>
               
-              {/* 稀有度概率展示 */}
+              {/* Rarity Probability Display */}
               <div className="max-w-md mx-auto">
-                <div className="text-sm text-white/60 mb-3">稀有度概率分布：</div>
+                <div className="text-sm text-white/60 mb-3">Rarity Probability Distribution:</div>
                 <div className="space-y-2">
                   {Object.entries(RARITY_CONFIG.LEVELS).map(([level, config]) => (
                     <div key={level} className="flex justify-between items-center">
@@ -466,14 +466,14 @@ export function RarityReveal({
           {isRevealing && revealedRarity === null && (
             <div className="text-center space-y-6">
               <div className="text-8xl animate-spin">⭐</div>
-              <h3 className="text-3xl font-bold text-white">稀有度揭晓中...</h3>
-              <p className="text-white/70">准备见证您神兽的稀有程度！</p>
+              <h3 className="text-3xl font-bold text-white">Revealing Rarity...</h3>
+              <p className="text-white/70">Prepare to witness your beast's rarity!</p>
             </div>
           )}
 
           {revealedRarity !== null && rarityInfo && (
             <div className="text-center space-y-6">
-              {/* 稀有度揭晓动画 */}
+              {/* Rarity Reveal Animation */}
               <div className={`relative inline-block p-8 rounded-2xl ${rarityInfo.bgColor} ${rarityInfo.borderColor} border-2`}>
                 <div className="text-8xl mb-4">
                   {revealedRarity === 4 ? '🌟' : 
@@ -485,7 +485,7 @@ export function RarityReveal({
                   {rarityInfo.name}
                 </Badge>
                 
-                {/* 特效标签 */}
+                {/* Special Effect Tags */}
                 {RARITY_CONFIG.BONUSES[revealedRarity].special.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2 justify-center">
                     {RARITY_CONFIG.BONUSES[revealedRarity].special.map((effect, index) => (
@@ -499,68 +499,68 @@ export function RarityReveal({
 
               <div className="space-y-4">
                 <h3 className={`text-3xl font-bold ${rarityInfo.color}`}>
-                  恭喜！您获得了{rarityInfo.name}神兽！
+                  Congratulations! You got a {rarityInfo.name} beast!
                 </h3>
                 <div className="text-white/70 space-y-2">
-                  <p>🎲 随机数: {vrfStatus.randomWord}</p>
-                  <p>📊 稀有度概率: {rarityInfo.probability}%</p>
-                  <p>🔢 稀有度等级: {revealedRarity}</p>
-                  <p>⚡ 属性倍率: {RARITY_CONFIG.BONUSES[revealedRarity].multiplier}x</p>
+                  <p>🎲 Random Number: {vrfStatus.randomWord}</p>
+                  <p>📊 Rarity Probability: {rarityInfo.probability}%</p>
+                  <p>🔢 Rarity Level: {revealedRarity}</p>
+                  <p>⚡ Attribute Multiplier: {RARITY_CONFIG.BONUSES[revealedRarity].multiplier}x</p>
                 </div>
               </div>
 
-              {/* 图鉴添加状态 */}
+              {/* Gallery Addition Status */}
               {nftAddedToGallery ? (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 max-w-2xl mx-auto">
-                  <div className="text-green-400 text-sm font-medium mb-2">📚 图鉴更新成功</div>
+                  <div className="text-green-400 text-sm font-medium mb-2">📚 Gallery update successful</div>
                   <div className="text-green-300/80 text-sm">
-                    ✅ 您的神兽已自动添加到图鉴中，可以前往查看！
+                    ✅ Your mythical beast has been automatically added to your gallery. You can go check it out!
                   </div>
                 </div>
               ) : saveError ? (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 max-w-2xl mx-auto">
-                  <div className="text-red-400 text-sm font-medium mb-2">❌ 图鉴保存失败</div>
+                  <div className="text-red-400 text-sm font-medium mb-2">❌ Gallery save failed</div>
                   <div className="text-red-300/80 text-sm mb-3">{saveError}</div>
                   <Button
                     onClick={manualSaveNFT}
                     className="bg-red-500 hover:bg-red-600 text-white"
                     size="sm"
                   >
-                    手动保存到图鉴
+                    Manually Save to Gallery
                   </Button>
                 </div>
               ) : (
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 max-w-2xl mx-auto">
-                  <div className="text-yellow-400 text-sm font-medium mb-2">📚 图鉴更新中</div>
+                  <div className="text-yellow-400 text-sm font-medium mb-2">📚 Gallery updating</div>
                   <div className="text-yellow-300/80 text-sm">
-                    ⏳ 正在将您的神兽添加到图鉴...
+                    ⏳ Adding your mythical beast to the gallery...
                   </div>
                 </div>
               )}
 
-              {/* VRF技术说明 */}
+              {/* VRF Technology Explanation */}
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 max-w-2xl mx-auto">
-                <div className="text-blue-400 text-sm font-medium mb-2">🔗 Chainlink VRF技术保证</div>
+                <div className="text-blue-400 text-sm font-medium mb-2">🔗 Chainlink VRF Technology Guarantee</div>
                 <div className="text-blue-300/80 text-sm space-y-1">
-                  <div>• 真正的链上随机性，无法预测或操控</div>
-                  <div>• 透明的概率分配，所有人都能验证</div>
-                  <div>• 去中心化的随机数生成，确保公平性</div>
+                  <div>• True on-chain randomness, unpredictable and tamper-proof</div>
+                  <div>• Transparent probability distribution, verifiable by everyone</div>
+                  <div>• Decentralized random number generation ensures fairness</div>
                 </div>
               </div>
 
-              {/* 操作按钮 */}
+              {/* Action Buttons */}
               <div className="flex gap-4 justify-center">
                 <Button
                   onClick={() => window.open('/gallery', '_blank')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
-                  查看我的神兽图鉴
+                  View My Beast Gallery
                 </Button>
                 <Button
                   onClick={() => window.location.href = '/mint'}
                   variant="outline"
                 >
-                  创造新神兽
+                  Create New Beast
                 </Button>
               </div>
             </div>
@@ -569,20 +569,20 @@ export function RarityReveal({
           {vrfStatus.status === 'failed' && (
             <div className="text-center space-y-6">
               <div className="text-6xl">❌</div>
-              <h3 className="text-2xl font-bold text-red-400">VRF请求失败</h3>
-              <p className="text-red-300">{vrfStatus.error || '请重试稀有度分配'}</p>
+              <h3 className="text-2xl font-bold text-red-400">VRF Request Failed</h3>
+              <p className="text-red-300">{vrfStatus.error || 'Please retry rarity assignment'}</p>
               <Button
                 onClick={() => window.location.reload()}
                 className="bg-red-500 hover:bg-red-600"
               >
-                重新请求稀有度
+                Request Rarity Again
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 返回按钮 */}
+      {/* Back Button */}
       {onBack && (
         <div className="text-center">
           <Button
@@ -590,7 +590,7 @@ export function RarityReveal({
             variant="outline"
             disabled={vrfStatus.status === 'pending'}
           >
-            返回上一步
+            Back to Previous Step
           </Button>
         </div>
       )}

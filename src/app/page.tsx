@@ -22,7 +22,7 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 模拟实时数据更新
+  // Simulate real-time data updates
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentStats(prev => ({
@@ -38,14 +38,14 @@ export default function Home() {
 
   return (
     <div className="bg-black text-white overflow-hidden">
-      {/* Hero Section - 全屏幕高度 */}
+      {/* Hero Section - Full screen height */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* 动态背景 */}
+        {/* Dynamic background */}
         <div className="absolute inset-0">
-          {/* 主背景渐变 */}
+          {/* Main background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
           
-          {/* 动态网格 */}
+          {/* Dynamic grid */}
           <div 
             className="absolute inset-0 opacity-20"
             style={{
@@ -58,7 +58,7 @@ export default function Home() {
             }}
           />
           
-          {/* 光效粒子 */}
+          {/* Light effect particles */}
           <div className="absolute inset-0">
             {[...Array(50)].map((_, i) => (
               <div
@@ -74,7 +74,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 中心光晕 */}
+          {/* Center glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
           <div 
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl animate-pulse" 
@@ -82,16 +82,16 @@ export default function Home() {
           />
         </div>
 
-        {/* 主要内容 */}
+        {/* Main content */}
         <div className="relative z-10 text-center max-w-6xl mx-auto px-6">
-          {/* 标题动画 */}
+          {/* Title animation */}
           <div className="space-y-8">
             <div className="inline-block">
               <div className="text-sm text-blue-400 uppercase tracking-[0.3em] mb-4 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]">
                 Next Generation AI Platform
               </div>
               <h1 className="text-6xl md:text-8xl lg:text-9xl font-thin leading-tight opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]">
-                神图计划
+                ShenTu Plan
               </h1>
               <div className="text-3xl md:text-5xl lg:text-6xl font-light mt-4 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]">
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -106,7 +106,7 @@ export default function Home() {
               Create unique digital artifacts with dual AI systems.
             </p>
 
-            {/* CTA按钮 */}
+            {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12 opacity-0 animate-[fadeInUp_0.8s_ease-out_1s_forwards]">
               <Link href="/mint" className="group">
                 <Button size="lg" className="bg-white text-black hover:bg-gray-100 text-lg px-12 py-4 rounded-full transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-blue-500/25">
@@ -123,7 +123,7 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* 钱包状态卡片 */}
+            {/* Wallet status card */}
             {mounted && isConnected && address && (
               <div className="mt-16 opacity-0 animate-[fadeInUp_0.8s_ease-out_1.2s_forwards]">
                 <div className="inline-block bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md">
@@ -155,7 +155,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 滚动指示器 */}
+        {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
@@ -163,7 +163,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 实时数据展示区块 */}
+      {/* Real-time data display section */}
       <section className="py-20 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -180,28 +180,28 @@ export default function Home() {
               {
                 value: currentStats.totalNFTs.toLocaleString(),
                 label: "Total NFTs Created",
-                subtitle: "神兽创造总数",
+                subtitle: "Total Mythical Beasts",
                 icon: "🐉",
                 color: "from-blue-500 to-cyan-500"
               },
               {
                 value: currentStats.activeUsers.toLocaleString(),
                 label: "Active Creators",
-                subtitle: "活跃创作者数量",
+                subtitle: "Active Creator Count",
                 icon: "👥",
                 color: "from-purple-500 to-pink-500"
               },
               {
                 value: `${currentStats.totalVolume.toFixed(1)} ETH`,
                 label: "Total Volume",
-                subtitle: "平台交易总量",
+                subtitle: "Platform Trading Volume",
                 icon: "💎",
                 color: "from-green-500 to-emerald-500"
               },
               {
                 value: currentStats.rareMinted.toLocaleString(),
                 label: "Legendary Beasts",
-                subtitle: "传说级神兽",
+                subtitle: "Legendary Tier Beasts",
                 icon: "⭐",
                 color: "from-yellow-500 to-orange-500"
               }
@@ -225,7 +225,7 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* 实时更新指示器 */}
+                {/* Real-time update indicator */}
                 <div className="absolute top-2 right-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
@@ -235,10 +235,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 功能特色区块 */}
+      {/* Features section */}
       <section className="py-32 relative">
         <div className="container mx-auto px-6">
-          {/* 区块标题 */}
+          {/* Section title */}
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl font-light mb-6">
               <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -250,7 +250,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 特色功能卡片 */}
+          {/* Feature cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {[
               {
@@ -285,7 +285,7 @@ export default function Home() {
                 key={index}
                 className={`group relative bg-gradient-to-br ${feature.gradient} border ${feature.border} backdrop-blur-xl rounded-3xl p-8 hover:scale-105 transition-all duration-500 hover:shadow-2xl`}
               >
-                {/* 卡片光效 */}
+                {/* Card lighting effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
                 <div className="relative z-10">
@@ -311,7 +311,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 技术架构展示 */}
+      {/* Technology stack showcase */}
       <section className="py-32 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-20">
@@ -352,7 +352,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 社区统计 */}
+      {/* Community statistics */}
       <section className="py-20 bg-gradient-to-r from-blue-900/20 to-purple-900/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 text-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -375,7 +375,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 行动号召区块 */}
+      {/* Call to action section */}
       <section className="py-32 relative">
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-4xl mx-auto">
@@ -407,7 +407,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 自定义CSS动画 */}
+      {/* Custom CSS animations */}
       <style jsx>{`
         @keyframes fadeInUp {
           from {

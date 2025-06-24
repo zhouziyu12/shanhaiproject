@@ -3,7 +3,7 @@ import { usePublicClient, useWalletClient } from 'wagmi';
 import { parseEther } from 'viem';
 import { sepolia } from 'wagmi/chains';
 
-// NFT合约ABI - 只包含需要的函数
+// NFT Contract ABI - only includes required functions
 const PROMPT_NFT_ABI = [
   {
     inputs: [
@@ -31,7 +31,7 @@ const PROMPT_NFT_ABI = [
   }
 ] as const;
 
-// 合约地址
+// Contract addresses
 const CONTRACTS = {
   PROMPT_NFT: '0x9269C7b6BFe45143f899fdA45d5ba2C7aDD0367A' as `0x${string}`,
   SHT_TOKEN: '0xDd0C2E81D9134A914fcA7Db9655d9813C87D5701' as `0x${string}`,
@@ -51,7 +51,7 @@ export function useContract() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintResult, setMintResult] = useState<MintResult | null>(null);
 
-  // 获取铸造价格
+  // Get mint price
   const getMintPrice = async (): Promise<bigint> => {
     try {
       const price = await publicClient?.readContract({
@@ -59,35 +59,35 @@ export function useContract() {
         abi: PROMPT_NFT_ABI,
         functionName: 'mintPrice'
       });
-      return price || parseEther('0.001'); // 默认0.001 ETH
+      return price || parseEther('0.001'); // Default 0.001 ETH
     } catch (error) {
-      console.log('获取铸造价格失败，使用默认值:', error);
+      console.log('Failed to get mint price, using default value:', error);
       return parseEther('0.001');
     }
   };
 
-  // 铸造NFT（支持折扣）
+  // Mint NFT (with discount support)
   const mintNFT = async (to: string, tokenURI: string, discountPercent: number = 0): Promise<MintResult> => {
     if (!walletClient || !publicClient) {
-      return { success: false, error: '钱包未连接' };
+      return { success: false, error: 'Wallet not connected' };
     }
 
     setIsMinting(true);
     setMintResult(null);
 
     try {
-      console.log('🚀 开始铸造NFT...');
-      console.log('📝 参数:', { to, tokenURI, discountPercent });
+      console.log('🚀 Starting NFT minting...');
+      console.log('📝 Parameters:', { to, tokenURI, discountPercent });
 
-      // 获取基础铸造价格
+      // Get base mint price
       const baseMintPrice = await getMintPrice();
-      console.log('💰 基础铸造价格:', baseMintPrice.toString(), 'wei');
+      console.log('💰 Base mint price:', baseMintPrice.toString(), 'wei');
 
-      // 计算折扣后的价格
+      // Calculate discounted price
       const actualPrice = baseMintPrice * BigInt(100 - discountPercent) / BigInt(100);
-      console.log('💸 折扣后价格:', actualPrice.toString(), 'wei', `(${discountPercent}% 折扣)`);
+      console.log('💸 Discounted price:', actualPrice.toString(), 'wei', `(${discountPercent}% discount)`);
 
-      // 发送交易
+      // Send transaction
       const hash = await walletClient.writeContract({
         address: CONTRACTS.PROMPT_NFT,
         abi: PROMPT_NFT_ABI,
@@ -97,38 +97,38 @@ export function useContract() {
         chain: sepolia
       });
 
-      console.log('📤 交易已发送:', hash);
+      console.log('📤 Transaction sent:', hash);
 
-      // 等待交易确认
+      // Wait for transaction confirmation
       const receipt = await publicClient.waitForTransactionReceipt({
         hash,
         confirmations: 1
       });
 
-      console.log('✅ 交易确认:', receipt);
+      console.log('✅ Transaction confirmed:', receipt);
 
-      // 解析tokenId - 从事件日志中获取
+      // Parse tokenId - get from event logs
       let tokenId = 0;
       if (receipt.logs && receipt.logs.length > 0) {
-        // Transfer事件的topic0
+        // Transfer event topic0
         const transferEventSignature = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
         const transferLog = receipt.logs.find(log => 
           log.topics[0] === transferEventSignature
         );
         
         if (transferLog && transferLog.topics[3]) {
-          // tokenId在Transfer事件的第4个topic中
+          // tokenId is in the 4th topic of Transfer event
           tokenId = parseInt(transferLog.topics[3], 16);
-          console.log('🎯 解析出Token ID:', tokenId);
+          console.log('🎯 Parsed Token ID:', tokenId);
         } else {
-          // 如果无法从日志解析，尝试读取totalSupply
+          // If unable to parse from logs, try reading totalSupply
           const totalSupply = await publicClient.readContract({
             address: CONTRACTS.PROMPT_NFT,
             abi: PROMPT_NFT_ABI,
             functionName: 'totalSupply'
           });
           tokenId = Number(totalSupply);
-          console.log('📊 从totalSupply推断Token ID:', tokenId);
+          console.log('📊 Inferred Token ID from totalSupply:', tokenId);
         }
       }
 
@@ -139,18 +139,18 @@ export function useContract() {
       };
 
       setMintResult(result);
-      console.log('🎉 NFT铸造成功!', result);
+      console.log('🎉 NFT minting successful!', result);
       
       return result;
 
     } catch (error: any) {
-      console.error('❌ 铸造失败:', error);
+      console.error('❌ Minting failed:', error);
       
-      let errorMessage = '铸造失败';
+      let errorMessage = 'Minting failed';
       if (error.message?.includes('insufficient funds')) {
-        errorMessage = '余额不足，请确保有足够的ETH支付gas费';
+        errorMessage = 'Insufficient balance, please ensure you have enough ETH for gas fees';
       } else if (error.message?.includes('user rejected')) {
-        errorMessage = '用户取消了交易';
+        errorMessage = 'User cancelled the transaction';
       } else if (error.shortMessage) {
         errorMessage = error.shortMessage;
       }

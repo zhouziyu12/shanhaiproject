@@ -1,11 +1,11 @@
-// 稀有度配置
+// Rarity configuration
 export const RARITY_CONFIG = {
   LEVELS: {
-    0: { name: '普通', probability: 60, color: 'text-gray-400', bgColor: 'bg-gray-500/20', borderColor: 'border-gray-500/30' },
-    1: { name: '稀有', probability: 25, color: 'text-blue-400', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/30' },
-    2: { name: '史诗', probability: 10, color: 'text-purple-400', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/30' },
-    3: { name: '传说', probability: 4, color: 'text-orange-400', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/30' },
-    4: { name: '神话', probability: 1, color: 'text-red-400', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/30' }
+    0: { name: 'Common', probability: 60, color: 'text-gray-400', bgColor: 'bg-gray-500/20', borderColor: 'border-gray-500/30' },
+    1: { name: 'Rare', probability: 25, color: 'text-blue-400', bgColor: 'bg-blue-500/20', borderColor: 'border-blue-500/30' },
+    2: { name: 'Epic', probability: 10, color: 'text-purple-400', bgColor: 'bg-purple-500/20', borderColor: 'border-purple-500/30' },
+    3: { name: 'Legendary', probability: 4, color: 'text-orange-400', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500/30' },
+    4: { name: 'Mythical', probability: 1, color: 'text-red-400', bgColor: 'bg-red-500/20', borderColor: 'border-red-500/30' }
   },
   VRF: {
     REVEAL_DELAY_MS: 8000,
@@ -14,10 +14,10 @@ export const RARITY_CONFIG = {
   },
   BONUSES: {
     0: { multiplier: 1.0, special: [] },
-    1: { multiplier: 1.2, special: ['蓝色光环'] },
-    2: { multiplier: 1.5, special: ['紫色光环', '特效粒子'] },
-    3: { multiplier: 2.0, special: ['金色光环', '传说光效', '背景变化'] },
-    4: { multiplier: 3.0, special: ['彩虹光环', '神话光效', '全屏特效', '专属动画'] }
+    1: { multiplier: 1.2, special: ['Blue Aura'] },
+    2: { multiplier: 1.5, special: ['Purple Aura', 'Special Particles'] },
+    3: { multiplier: 2.0, special: ['Golden Aura', 'Legendary Effects', 'Background Change'] },
+    4: { multiplier: 3.0, special: ['Rainbow Aura', 'Mythical Effects', 'Fullscreen Effects', 'Exclusive Animation'] }
   }
 };
 

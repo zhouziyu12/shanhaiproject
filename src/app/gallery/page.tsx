@@ -7,7 +7,7 @@ export default function GalleryPage() {
   // 监听NFT添加事件
   useEffect(() => {
     const handleNFTAdded = (event: CustomEvent) => {
-      console.log('🎉 图鉴页面收到NFT添加事件:', event.detail);
+      console.log('🎉 The album page received an NFT addition event:', event.detail);
       // 可以在这里添加通知或者强制刷新
       setTimeout(() => {
         window.location.reload();

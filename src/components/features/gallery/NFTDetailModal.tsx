@@ -33,7 +33,7 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
 
   const copyIPFSUrl = (url: string) => {
     navigator.clipboard.writeText(url);
-    alert('IPFS URL已复制到剪贴板！');
+    alert('IPFS URL copied to clipboard!');
   };
 
   return (
@@ -91,13 +91,13 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                     onClick={handleShare}
                     className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30"
                   >
-                    🔗 分享NFT
+                    🔗 Share NFT
                   </Button>
                   <Button
                     onClick={() => window.open(`https://ipfs.io/ipfs/${nft.ipfsImageUrl.replace('ipfs://', '')}`, '_blank')}
                     className="bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
                   >
-                    🌐 查看IPFS
+                    🌐 View IPFS
                   </Button>
                 </div>
               </div>
@@ -105,9 +105,9 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
               <div className="space-y-4">
                 <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
                   {[
-                    { key: 'details', label: '详情' },
-                    { key: 'attributes', label: '属性' },
-                    { key: 'history', label: '历史' }
+                    { key: 'details', label: 'Details' },
+                    { key: 'attributes', label: 'Attributes' },
+                    { key: 'history', label: 'History' }
                   ].map((tab) => (
                     <button
                       key={tab.key}
@@ -128,14 +128,14 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                     <div className="space-y-4">
                       <div className="space-y-3">
                         <div>
-                          <label className="text-white/60 text-sm">原始创意</label>
+                          <label className="text-white/60 text-sm">Original Inspiration</label>
                           <p className="text-white bg-white/5 p-3 rounded mt-1">
                             {nft.originalInput}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="text-white/60 text-sm">AI优化描述</label>
+                          <label className="text-white/60 text-sm">AI Optimized Description</label>
                           <p className="text-white bg-white/5 p-3 rounded mt-1 text-sm">
                             {nft.optimizedPrompt}
                           </p>
@@ -143,16 +143,16 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="text-white/60 text-sm">艺术风格</label>
+                            <label className="text-white/60 text-sm">Art Style</label>
                             <p className="text-white">
-                              {nft.style === 'classic' ? '古典水墨' :
-                               nft.style === 'modern' ? '现代插画' :
-                               nft.style === 'fantasy' ? '奇幻艺术' :
-                               nft.style === 'ink' ? '水墨写意' : nft.style}
+                              {nft.style === 'classic' ? 'Classical Ink' :
+                               nft.style === 'modern' ? 'Modern Illustration' :
+                               nft.style === 'fantasy' ? 'Fantasy Art' :
+                               nft.style === 'ink' ? 'Ink Wash' : nft.style}
                             </p>
                           </div>
                           <div>
-                            <label className="text-white/60 text-sm">稀有度等级</label>
+                            <label className="text-white/60 text-sm">Rarity Level</label>
                             <p className={`font-bold ${rarityInfo.color}`}>
                               {nft.rarity}/4 - {rarityInfo.name}
                             </p>
@@ -161,23 +161,23 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                       </div>
 
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                        <h4 className="text-blue-400 font-medium mb-3">🔧 技术信息</h4>
+                        <h4 className="text-blue-400 font-medium mb-3">🔧 Technical Information</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-white/60">AI模型:</span>
-                            <span className="text-white">DeepSeek + 智谱AI</span>
+                            <span className="text-white/60">AI Model:</span>
+                            <span className="text-white">DeepSeek + Zhipu AI</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-white/60">存储方式:</span>
+                            <span className="text-white/60">Storage:</span>
                             <span className="text-green-400">Pinata IPFS</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-white/60">稀有度来源:</span>
+                            <span className="text-white/60">Rarity Source:</span>
                             <span className="text-purple-400">Chainlink VRF</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-white/60">区块链:</span>
-                            <span className="text-blue-400">以太坊</span>
+                            <span className="text-white/60">Blockchain:</span>
+                            <span className="text-blue-400">Ethereum</span>
                           </div>
                         </div>
                       </div>
@@ -208,12 +208,12 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                             <span className="text-green-400 text-sm">⛏️</span>
                           </div>
                           <div className="flex-1">
-                            <p className="text-white font-medium">NFT铸造</p>
+                            <p className="text-white font-medium">NFT Minted</p>
                             <p className="text-white/60 text-sm">
-                              {new Date(nft.mintedAt).toLocaleString('zh-CN')}
+                              {new Date(nft.mintedAt).toLocaleString('en-US')}
                             </p>
                           </div>
-                          <Badge className="bg-green-500/20 text-green-400">成功</Badge>
+                          <Badge className="bg-green-500/20 text-green-400">Success</Badge>
                         </div>
                       </div>
 
@@ -224,7 +224,7 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                               <span className="text-purple-400 text-sm">🎲</span>
                             </div>
                             <div className="flex-1">
-                              <p className="text-white font-medium">稀有度分配</p>
+                              <p className="text-white font-medium">Rarity Assignment</p>
                               <p className="text-white/60 text-sm">
                                 Chainlink VRF: {nft.vrfRequestId.slice(0, 20)}...
                               </p>
@@ -242,9 +242,9 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                             <span className="text-blue-400 text-sm">📦</span>
                           </div>
                           <div className="flex-1">
-                            <p className="text-white font-medium">IPFS存储</p>
+                            <p className="text-white font-medium">IPFS Storage</p>
                             <p className="text-white/60 text-sm">
-                              去中心化永久存储
+                              Decentralized permanent storage
                             </p>
                           </div>
                           <Button
@@ -253,7 +253,7 @@ export function NFTDetailModal({ nft, isOpen, onClose, onShare }: NFTDetailModal
                             onClick={() => copyIPFSUrl(nft.ipfsImageUrl)}
                             className="text-blue-400 border-blue-500/30"
                           >
-                            复制
+                            Copy
                           </Button>
                         </div>
                       </div>

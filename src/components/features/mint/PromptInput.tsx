@@ -18,63 +18,63 @@ interface PromptInputProps {
 export function PromptInput({
   value,
   onChange,
-  placeholder = "描述你心中的神兽...",
+  placeholder = "Describe your vision of the mythical beast...",
   disabled = false,
   maxLength = 500
 }: PromptInputProps) {
   const [showTemplates, setShowTemplates] = useState(false);
 
-  // 灵感模板
+  // Inspiration templates
   const templates = [
     {
-      category: '古典神兽',
+      category: 'Classical Beasts',
       prompts: [
-        '威武的金色神龙翱翔云海之间',
-        '神秘的九尾狐仙月下起舞',
-        '巨大的鲲鹏展翅遮天蔽日',
-        '威严的白虎踏雪无痕',
-        '优雅的青龙腾云驾雾',
-        '神圣的朱雀浴火重生',
-        '古老的玄武守护四方',
-        '祥瑞的麒麟踏云而来'
+        'Majestic golden dragon soaring through clouds',
+        'Mysterious nine-tailed fox dancing under the moon',
+        'Giant Kunpeng spreading wings to cover the sky',
+        'Mighty white tiger walking on snow without leaving traces',
+        'Elegant azure dragon riding clouds and mist',
+        'Sacred vermillion bird reborn from flames',
+        'Ancient black tortoise guardian of the four directions',
+        'Auspicious qilin stepping on clouds'
       ]
     },
     {
-      category: '元素神兽',
+      category: 'Elemental Beasts',
       prompts: [
-        '火焰神兽，全身燃烧着烈火',
-        '冰霜神兽，身披寒冰铠甲',
-        '雷电神兽，双眼闪烁电光',
-        '风暴神兽，羽翼掀起狂风',
-        '大地神兽，脚踏山川大地',
-        '水晶神兽，身体透明如钻石',
-        '暗影神兽，隐身于黑暗中',
-        '光明神兽，散发神圣光辉'
+        'Fire beast with body engulfed in flames',
+        'Frost beast wearing armor of ice',
+        'Lightning beast with eyes flashing electricity',
+        'Storm beast with wings stirring up fierce winds',
+        'Earth beast treading on mountains and rivers',
+        'Crystal beast with transparent diamond-like body',
+        'Shadow beast hidden in darkness',
+        'Light beast radiating sacred brilliance'
       ]
     },
     {
-      category: '奇幻创意',
+      category: 'Fantasy Concepts',
       prompts: [
-        '机械朋克风格的钢铁神龙',
-        '星空图案的宇宙神兽',
-        '花瓣组成的春之神鹿',
-        '彩虹色羽毛的幻彩神鸟',
-        '音符形状的音乐神兽',
-        '书页翻飞的智慧神龟',
-        '时钟齿轮的时间神兽',
-        '云朵缭绕的天空神马'
+        'Steampunk-style mechanical steel dragon',
+        'Cosmic beast with starry patterns',
+        'Spring deer composed of flower petals',
+        'Rainbow bird with iridescent feathers',
+        'Musical beast shaped like musical notes',
+        'Wisdom turtle with flying book pages',
+        'Time beast with clockwork gears',
+        'Sky horse surrounded by swirling clouds'
       ]
     }
   ];
 
-  // 随机获取灵感
+  // Get random inspiration
   const getRandomTemplate = () => {
     const allPrompts = templates.flatMap(category => category.prompts);
     const randomPrompt = allPrompts[Math.floor(Math.random() * allPrompts.length)];
     onChange(randomPrompt);
   };
 
-  // 字数统计
+  // Character count
   const wordCount = value.length;
   const isOverLimit = wordCount > maxLength;
 
@@ -95,7 +95,7 @@ export function PromptInput({
           )}
         />
         
-        {/* 字数统计 */}
+        {/* Character count */}
         <div className="absolute bottom-2 right-2 text-xs text-white/50">
           <span className={cn(isOverLimit && "text-red-400")}>
             {wordCount}/{maxLength}
@@ -103,7 +103,7 @@ export function PromptInput({
         </div>
       </div>
 
-      {/* 控制按钮 */}
+      {/* Control buttons */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <Button
@@ -114,7 +114,7 @@ export function PromptInput({
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
             <Lightbulb className="mr-1 h-3 w-3" />
-            灵感模板
+            Inspiration Templates
           </Button>
           
           <Button
@@ -125,7 +125,7 @@ export function PromptInput({
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
             <RefreshCw className="mr-1 h-3 w-3" />
-            随机灵感
+            Random Inspiration
           </Button>
         </div>
 
@@ -137,17 +137,17 @@ export function PromptInput({
             disabled={disabled}
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
-            清空
+            Clear
           </Button>
         )}
       </div>
 
-      {/* 灵感模板展示 */}
+      {/* Inspiration template display */}
       {showTemplates && (
         <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
           <div className="flex items-center gap-2 text-white">
             <Wand2 className="h-4 w-4" />
-            <span className="font-medium">选择灵感模板</span>
+            <span className="font-medium">Choose Inspiration Template</span>
           </div>
           
           {templates.map((category) => (
@@ -175,13 +175,13 @@ export function PromptInput({
         </div>
       )}
 
-      {/* 提示信息 */}
+      {/* Tips */}
       <div className="flex items-start gap-2 text-xs text-white/60">
         <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0" />
         <div>
-          <div>💡 <strong>创作建议：</strong>描述神兽的外观、能力、环境，越详细越好</div>
-          <div>🎨 <strong>风格提示：</strong>可以加入颜色、材质、光效等视觉元素</div>
-          <div>⚡ <strong>AI增强：</strong>DeepSeek会自动优化你的描述，生成更专业的提示词</div>
+          <div>💡 <strong>Creation Tips:</strong> Describe the beast's appearance, abilities, and environment - the more detailed, the better</div>
+          <div>🎨 <strong>Style Hints:</strong> Include colors, materials, lighting effects and other visual elements</div>
+          <div>⚡ <strong>AI Enhancement:</strong> DeepSeek will automatically optimize your description for more professional prompts</div>
         </div>
       </div>
     </div>

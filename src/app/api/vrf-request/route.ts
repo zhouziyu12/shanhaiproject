@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
-// app/api/vrf-request/route.ts - 修复Token验证和数据库问题
+// app/api/vrf-request/route.ts - Fix Token validation and database issues
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 
-// 配置
+// Configuration
 const SHANHAI_NFT_CONTRACT_ADDRESS = '0x9269C7b6BFe45143f899fdA45d5ba2C7aDD0367A';
 const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/aoHaEBQa8NDjn-e0t8DyL6Ac8VZ6p9ST';
 const MAX_RETRIES = 3;
 
-// VRF 2.5合约ABI
+// VRF 2.5 Contract ABI
 const SHANHAI_NFT_ABI = [
   {
     "inputs": [{"name": "tokenId", "type": "uint256"}],
@@ -50,7 +50,7 @@ const SHANHAI_NFT_ABI = [
   }
 ];
 
-// 创建Provider
+// Create Provider
 function createProvider() {
   return new ethers.JsonRpcProvider(SEPOLIA_RPC_URL, {
     name: 'sepolia',
@@ -58,7 +58,7 @@ function createProvider() {
   });
 }
 
-// 🔧 BigInt序列化辅助函数
+// 🔧 BigInt serialization helper function
 function serializeVRFRequest(vrfRequest: any) {
   return {
     success: true,
@@ -71,20 +71,20 @@ function serializeVRFRequest(vrfRequest: any) {
   };
 }
 
-// 验证Token是否存在且有效
+// Validate if Token exists and is valid
 async function validateToken(contract: ethers.Contract, tokenId: bigint) {
-  console.log(`🔍 验证Token ${tokenId}是否存在...`);
+  console.log(`🔍 Validating if Token ${tokenId} exists...`);
   
   try {
-    // 方法1: 检查ownerOf
+    // Method 1: Check ownerOf
     try {
       const owner = await contract.ownerOf(tokenId);
       if (owner && owner !== ethers.ZeroAddress) {
-        console.log('✅ Token存在，所有者:', owner);
+        console.log('✅ Token exists, owner:', owner);
         
-        // 获取详细信息
+        // Get detailed information
         const beastInfo = await contract.beasts(tokenId);
-        console.log('📊 Beast详细信息:', {
+        console.log('📊 Beast detailed information:', {
           prompt: beastInfo.prompt || beastInfo[0],
           creator: beastInfo.creator || beastInfo[4],
           rarity: (beastInfo.rarity || beastInfo[2]).toString(),
@@ -103,35 +103,35 @@ async function validateToken(contract: ethers.Contract, tokenId: bigint) {
         };
       }
     } catch (ownerError) {
-      console.log('❌ ownerOf调用失败，Token可能不存在:', ownerError.message);
+      console.log('❌ ownerOf call failed, Token may not exist:', ownerError.message);
     }
     
-    // 方法2: 检查下一个TokenId
+    // Method 2: Check next TokenId
     try {
       const nextTokenId = await contract.getNextTokenId();
-      console.log(`📋 下一个Token ID: ${nextTokenId}, 请求的Token ID: ${tokenId}`);
+      console.log(`📋 Next Token ID: ${nextTokenId}, Requested Token ID: ${tokenId}`);
       
       if (BigInt(tokenId) >= nextTokenId) {
-        throw new Error(`Token ${tokenId} 尚未铸造。下一个可用ID: ${nextTokenId}`);
+        throw new Error(`Token ${tokenId} has not been minted yet. Next available ID: ${nextTokenId}`);
       }
     } catch (nextIdError) {
-      console.warn('⚠️ 无法获取下一个TokenId:', nextIdError.message);
+      console.warn('⚠️ Unable to get next TokenId:', nextIdError.message);
     }
     
     return { exists: false };
     
   } catch (error) {
-    console.error('❌ Token验证过程出错:', error);
+    console.error('❌ Error in Token validation process:', error);
     throw error;
   }
 }
 
-// GET: 查询VRF状态
+// GET: Query VRF status
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const requestId = searchParams.get('requestId');
 
-  console.log('🔗 查询VRF 2.5状态:', requestId);
+  console.log('🔗 Querying VRF 2.5 status:', requestId);
 
   if (!requestId) {
     return NextResponse.json({
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 检查数据库连接
+    // Check database connection
     try {
       const vrfRequest = await prisma.vrfRequest.findUnique({
         where: { requestId }
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(serializeVRFRequest(vrfRequest));
       }
 
-      // 查询链上状态
+      // Query on-chain status
       const tokenId = vrfRequest.tokenId;
       if (!tokenId) {
         throw new Error('Token ID missing from database');
@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
         });
       }
     } catch (dbError) {
-      console.error('❌ 数据库连接失败:', dbError);
+      console.error('❌ Database connection failed:', dbError);
       return NextResponse.json({
         success: false,
         error: 'Database connection failed',
@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('❌ 查询VRF状态失败:', error);
+    console.error('❌ Failed to query VRF status:', error);
     return NextResponse.json({
       success: false,
       error: 'Failed to query VRF status',
@@ -207,15 +207,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: 创建VRF监控记录
+// POST: Create VRF monitoring record
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { tokenId, requester } = body;
 
-    console.log('🔗 创建VRF 2.5监控记录:', { tokenId, requester });
+    console.log('🔗 Creating VRF 2.5 monitoring record:', { tokenId, requester });
 
-    // 首先验证Token
+    // First validate Token
     try {
       const provider = createProvider();
       const contract = new ethers.Contract(SHANHAI_NFT_CONTRACT_ADDRESS, SHANHAI_NFT_ABI, provider);
@@ -231,13 +231,13 @@ export async function POST(request: NextRequest) {
         }, { status: 404 });
       }
       
-      console.log('✅ Token验证成功');
+      console.log('✅ Token validation successful');
       
-      // 检查稀有度是否已经揭晓
+      // Check if rarity has already been revealed
       if (tokenValidation.rarityRevealed) {
-        console.log('🎉 VRF 2.5稀有度已经揭晓:', tokenValidation.rarity?.toString());
+        console.log('🎉 VRF 2.5 rarity already revealed:', tokenValidation.rarity?.toString());
         
-        // 不使用数据库，直接返回结果
+        // Don't use database, return result directly
         return NextResponse.json({
           success: true,
           status: 'fulfilled',
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
       }
       
     } catch (error) {
-      console.error('❌ Token验证失败:', error);
+      console.error('❌ Token validation failed:', error);
       return NextResponse.json({
         success: false,
         error: 'Token validation failed',
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 尝试数据库操作，如果失败则跳过
+    // Try database operation, skip if it fails
     try {
       await prisma.User.upsert({
         where: { address: requester.toLowerCase() },
@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      console.log('💾 VRF监控记录已保存到数据库');
+      console.log('💾 VRF monitoring record saved to database');
 
       return NextResponse.json({
         success: true,
@@ -299,9 +299,9 @@ export async function POST(request: NextRequest) {
       });
 
     } catch (dbError) {
-      console.error('⚠️ 数据库保存失败，但Token验证成功:', dbError);
+      console.error('⚠️ Database save failed, but Token validation successful:', dbError);
       
-      // 即使数据库失败，也返回成功（无数据库模式）
+      // Even if database fails, return success (no database mode)
       return NextResponse.json({
         success: true,
         vrfRequestId: `vrf_${tokenId}_${Date.now()}_nodatabase`,
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('❌ 创建VRF监控记录失败:', error);
+    console.error('❌ Failed to create VRF monitoring record:', error);
     return NextResponse.json({
       success: false,
       error: 'Failed to create VRF monitoring record',
@@ -327,7 +327,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 工具函数：带重试的链上状态查询
+// Utility function: On-chain status query with retry
 async function queryChainStatusWithRetry(tokenId: bigint, retries = MAX_RETRIES): Promise<{
   rarityRevealed: boolean;
   rarity: number;
@@ -371,7 +371,7 @@ async function queryChainStatusWithRetry(tokenId: bigint, retries = MAX_RETRIES)
       }
 
     } catch (error) {
-      console.error(`❌ 查询尝试 ${i + 1} 失败:`, error);
+      console.error(`❌ Query attempt ${i + 1} failed:`, error);
       
       if (i === retries - 1) {
         throw error;

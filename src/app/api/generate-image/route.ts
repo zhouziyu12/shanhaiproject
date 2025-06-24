@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
 
     if (!finalPrompt.trim()) {
       return NextResponse.json({ 
-        error: '请提供神兽描述' 
+        error: 'Please provide a description' 
       }, { status: 400 });
     }
 
-    console.log('🎨 智谱AI图片生成开始...');
-    console.log('🖼️ 生成提示词:', finalPrompt);
+    console.log('🎨 Zhipu AI image generation starting...');
+    console.log('🖼️ Generation prompt:', finalPrompt);
 
-    // 智谱AI API 调用
+    // Zhipu AI API call
     const zhipuResponse = await fetch('https://open.bigmodel.cn/api/paas/v4/images/generations', {
       method: 'POST',
       headers: {
@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
 
     if (!zhipuResponse.ok) {
       const errorText = await zhipuResponse.text();
-      console.error('智谱AI API错误:', zhipuResponse.status, errorText);
+      console.error('Zhipu AI API error:', zhipuResponse.status, errorText);
       
-      // 如果API失败，返回占位符图片
+      // If API fails, return placeholder image
       const placeholderUrl = createPlaceholderImage(finalPrompt);
       return NextResponse.json({
         success: true,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         optimizedPrompt: finalPrompt,
         style,
         source: 'placeholder',
-        note: '智谱AI API暂时不可用，显示预览图片'
+        note: 'Zhipu AI API temporarily unavailable, showing preview image'
       });
     }
 
@@ -58,11 +58,11 @@ export async function POST(request: NextRequest) {
     const imageUrl = result.data[0]?.url;
 
     if (!imageUrl) {
-      throw new Error('未获取到图片URL');
+      throw new Error('Failed to obtain image URL');
     }
 
-    console.log('✅ 智谱AI图片生成完成');
-    console.log('🔗 图片URL:', imageUrl);
+    console.log('✅ Zhipu AI image generation completed');
+    console.log('🔗 Image URL:', imageUrl);
 
     return NextResponse.json({
       success: true,
@@ -75,9 +75,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ 图片生成失败:', error);
+    console.error('❌ Image generation failed:', error);
     
-    // 错误时返回占位符
+    // Return placeholder on error
     const requestData = await request.json();
     const placeholderUrl = createPlaceholderImage(requestData.optimizedPrompt || requestData.userInput);
     
@@ -88,14 +88,14 @@ export async function POST(request: NextRequest) {
       optimizedPrompt: requestData.optimizedPrompt || requestData.userInput,
       style: requestData.style,
       source: 'placeholder',
-      note: '图片生成失败，显示预览图片'
+      note: 'Image generation failed, showing preview image'
     });
   }
 }
 
-// 创建占位符图片URL
+// Create placeholder image URL
 function createPlaceholderImage(prompt: string): string {
-  // 使用placeholder服务创建动态图片
+  // Use placeholder service to create dynamic image
   const encodedPrompt = encodeURIComponent(prompt.substring(0, 50));
   const colors = ['7c3aed', 'ec4899', '3b82f6', '10b981', 'f59e0b'];
   const randomColor = colors[Math.floor(Math.random() * colors.length)];

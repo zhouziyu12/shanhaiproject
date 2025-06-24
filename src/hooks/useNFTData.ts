@@ -33,10 +33,10 @@ export interface UserStats {
   favoriteStyle: string;
 }
 
-// 生成神兽名称
+// Generate mythical beast names
 function generateBeastName(input: string): string {
-  const prefixes = ['天', '玄', '神', '灵', '圣', '仙', '古', '幻', '紫', '金'];
-  const suffixes = ['龙', '凤', '麟', '虎', '狮', '鹏', '鹰', '狐', '龟', '蛇'];
+  const prefixes = ['Divine', 'Mystic', 'Sacred', 'Spirit', 'Holy', 'Celestial', 'Ancient', 'Phantom', 'Cosmic', 'Golden'];
+  const suffixes = ['Dragon', 'Phoenix', 'Qilin', 'Tiger', 'Lion', 'Roc', 'Eagle', 'Fox', 'Turtle', 'Serpent'];
   
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
@@ -46,7 +46,7 @@ function generateBeastName(input: string): string {
   const prefix = prefixes[Math.abs(hash) % prefixes.length];
   const suffix = suffixes[Math.abs(hash >> 8) % suffixes.length];
   
-  return `${prefix}${suffix}`;
+  return `${prefix} ${suffix}`;
 }
 
 export function useNFTData() {
@@ -55,10 +55,10 @@ export function useNFTData() {
   const [isLoading, setIsLoading] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
 
-  // 从数据库加载NFT数据
+  // Load NFT data from database
   const loadNFTData = useCallback(async () => {
     if (!isConnected || !address) {
-      console.log('❌ 钱包未连接，清空数据');
+      console.log('❌ Wallet not connected, clearing data');
       setNftData([]);
       setUserStats(null);
       return;
@@ -66,7 +66,7 @@ export function useNFTData() {
 
     setIsLoading(true);
     try {
-      console.log('🔄 从数据库加载NFT数据...', address);
+      console.log('🔄 Loading NFT data from database...', address);
       
       const response = await fetch(`/api/nfts?address=${address}`);
       const data = await response.json();
@@ -76,23 +76,23 @@ export function useNFTData() {
           ...nft,
           mintedAt: new Date(nft.mintedAt).getTime(),
           attributes: [
-            { trait_type: '艺术风格', value: nft.style },
-            { trait_type: '稀有度', value: ['普通', '稀有', '史诗', '传说', '神话'][nft.rarity] },
-            { trait_type: 'AI模型', value: 'DeepSeek + 智谱AI' },
-            { trait_type: '存储方式', value: 'Pinata IPFS' }
+            { trait_type: 'Art Style', value: nft.style },
+            { trait_type: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary', 'Mythical'][nft.rarity] },
+            { trait_type: 'AI Model', value: 'DeepSeek + ZhipuAI' },
+            { trait_type: 'Storage', value: 'Pinata IPFS' }
           ]
         }));
         
-        console.log('✅ 数据库NFT数据加载成功:', nfts.length, '个', nfts);
+        console.log('✅ Database NFT data loaded successfully:', nfts.length, 'items', nfts);
         setNftData(nfts);
         setUserStats(calculateUserStats(nfts));
       } else {
-        console.error('❌ 数据库NFT数据加载失败:', data.error);
+        console.error('❌ Database NFT data loading failed:', data.error);
         setNftData([]);
         setUserStats(null);
       }
     } catch (error) {
-      console.error('❌ 数据库连接失败:', error);
+      console.error('❌ Database connection failed:', error);
       setNftData([]);
       setUserStats(null);
     } finally {
@@ -100,7 +100,7 @@ export function useNFTData() {
     }
   }, [address, isConnected]);
 
-  // 添加NFT到数据库
+  // Add NFT to database
   const addNFT = async (newNFTData: {
     tokenId: number;
     originalInput: string;
@@ -114,25 +114,25 @@ export function useNFTData() {
     rarity: RarityLevel;
     vrfRequestId?: string;
   }) => {
-    console.log('🆕 addNFT函数被调用！参数:', newNFTData);
+    console.log('🆕 addNFT function called! Parameters:', newNFTData);
     
     if (!address) {
-      console.error('❌ 无法添加NFT：钱包未连接');
+      console.error('❌ Cannot add NFT: wallet not connected');
       return false;
     }
 
     try {
-      console.log('📝 开始添加NFT到数据库...');
+      console.log('📝 Starting to add NFT to database...');
 
       const beastName = generateBeastName(newNFTData.originalInput);
       
       const nftToCreate = {
         ...newNFTData,
-        name: `山海神兽 · ${beastName}`,
-        creator: newNFTData.creator.toLowerCase() // 确保地址小写
+        name: `Shan Hai Beast · ${beastName}`,
+        creator: newNFTData.creator.toLowerCase() // Ensure address is lowercase
       };
 
-      console.log('🎨 完整NFT数据:', nftToCreate);
+      console.log('🎨 Complete NFT data:', nftToCreate);
 
       const response = await fetch('/api/nfts', {
         method: 'POST',
@@ -143,39 +143,39 @@ export function useNFTData() {
       const data = await response.json();
       
       if (data.success) {
-        console.log('✅ NFT成功添加到数据库!', data.nft);
+        console.log('✅ NFT successfully added to database!', data.nft);
         
-        // 重新加载数据
+        // Reload data
         await loadNFTData();
         
-        // 触发成功事件
+        // Trigger success event
         if (typeof window !== 'undefined') {
           const event = new CustomEvent('nftAddedToGallery', { 
             detail: { nft: data.nft, success: true } 
           });
           window.dispatchEvent(event);
-          console.log('📡 已触发nftAddedToGallery事件');
+          console.log('📡 nftAddedToGallery event triggered');
         }
         
         return true;
       } else {
-        console.error('❌ 数据库添加失败:', data.error, data.details);
+        console.error('❌ Database addition failed:', data.error, data.details);
         return false;
       }
     } catch (error) {
-      console.error('❌ 添加NFT到数据库失败:', error);
+      console.error('❌ Failed to add NFT to database:', error);
       return false;
     }
   };
 
-  // 强制添加测试NFT
+  // Force add test NFT
   const forceAddTestNFT = async () => {
     if (!address) return false;
     
     const testNFT = {
-      tokenId: Date.now(), // 使用时间戳作为唯一ID
-      originalInput: '测试神兽描述 - 数据库版本',
-      optimizedPrompt: '这是一个数据库版本的测试神兽，用于验证完整的数据存储功能...',
+      tokenId: Date.now(), // Use timestamp as unique ID
+      originalInput: 'Test mythical beast description - Database version',
+      optimizedPrompt: 'This is a database version test mythical beast, used to verify complete data storage functionality...',
       style: 'modern',
       creator: address,
       imageUrl: 'https://via.placeholder.com/400x400/8B5CF6/FFFFFF?text=DB+Test+Beast',
@@ -186,11 +186,11 @@ export function useNFTData() {
       vrfRequestId: 'test-db-' + Date.now()
     };
 
-    console.log('🧪 强制添加数据库测试NFT:', testNFT);
+    console.log('🧪 Force adding database test NFT:', testNFT);
     return await addNFT(testNFT);
   };
 
-  // 计算统计数据
+  // Calculate statistics
   const calculateUserStats = (nfts: NFTData[]): UserStats => {
     const rarityBreakdown = nfts.reduce((acc, nft) => {
       acc[nft.rarity] = (acc[nft.rarity] || 0) + 1;
@@ -218,32 +218,32 @@ export function useNFTData() {
     };
   };
 
-  // 调试函数
+  // Debug function
   const debugInfo = () => {
-    console.log('🐛 useNFTData调试信息 (数据库版本):');
-    console.log('- 钱包连接:', isConnected);
-    console.log('- 钱包地址:', address);
-    console.log('- NFT数据长度:', nftData.length);
-    console.log('- NFT数据:', nftData);
-    console.log('- 用户统计:', userStats);
-    console.log('- 数据来源: 数据库 (Prisma + SQLite)');
+    console.log('🐛 useNFTData debug info (Database version):');
+    console.log('- Wallet connected:', isConnected);
+    console.log('- Wallet address:', address);
+    console.log('- NFT data length:', nftData.length);
+    console.log('- NFT data:', nftData);
+    console.log('- User stats:', userStats);
+    console.log('- Data source: Database (Prisma + SQLite)');
   };
 
-  // 清空数据库数据（开发用）
+  // Clear database data (development use)
   const clearAllData = async () => {
-    if (confirm('确定要清空数据库中的所有NFT数据吗？此操作不可逆！')) {
+    if (confirm('Are you sure you want to clear all NFT data from the database? This action is irreversible!')) {
       try {
-        // 这里可以添加一个清空数据库的API
-        console.log('🧹 清空数据库数据 - 需要实现API');
+        // Can add a database clearing API here
+        console.log('🧹 Clear database data - API implementation needed');
         setNftData([]);
         setUserStats(null);
       } catch (error) {
-        console.error('清空数据失败:', error);
+        console.error('Failed to clear data:', error);
       }
     }
   };
 
-  // 初始化加载
+  // Initialize loading
   useEffect(() => {
     loadNFTData();
   }, [loadNFTData]);
@@ -257,7 +257,7 @@ export function useNFTData() {
     loadNFTData,
     debugInfo,
     clearAllData,
-    // 筛选和搜索
+    // Filter and search
     filterByRarity: (rarity: RarityLevel | 'all') => {
       if (rarity === 'all') return nftData;
       return nftData.filter(nft => nft.rarity === rarity);
@@ -275,9 +275,9 @@ export function useNFTData() {
         nft.tokenId.toString().includes(query)
       );
     },
-    // 获取显示图片的URL
+    // Get display image URL
     getDisplayImageUrl: (nft: NFTData) => {
-      // 优先使用IPFS网关URL
+      // Prioritize IPFS gateway URL
       if (nft.ipfsImageUrl && nft.ipfsImageUrl.startsWith('ipfs://')) {
         return `https://gateway.pinata.cloud/ipfs/${nft.ipfsImageUrl.replace('ipfs://', '')}`;
       }

@@ -43,7 +43,7 @@ export function AIPreview({
   
   const styleInfo = getStyleInfo(style);
 
-  // 加载状态组件
+  // Loading state component
   const LoadingState = () => (
     <div className="aspect-square bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center">
       <div className="text-center space-y-4">
@@ -52,8 +52,8 @@ export function AIPreview({
           <div className="absolute inset-0 rounded-full bg-purple-500/20 animate-ping" />
         </div>
         <div className="space-y-2">
-          <p className="text-white font-medium">AI正在创作中...</p>
-          <p className="text-white/60 text-sm">这可能需要几秒钟</p>
+          <p className="text-white font-medium">AI is creating...</p>
+          <p className="text-white/60 text-sm">This may take a few seconds</p>
         </div>
         <div className="flex justify-center space-x-1">
           {[0, 1, 2].map((i) => (
@@ -68,7 +68,7 @@ export function AIPreview({
     </div>
   );
 
-  // 空状态组件
+  // Empty state component
   const EmptyState = () => (
     <div className="aspect-square border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center">
       <div className="text-center space-y-4 p-8">
@@ -77,14 +77,14 @@ export function AIPreview({
           <Sparkles className="h-6 w-6 text-purple-400 absolute -top-1 -right-1" />
         </div>
         <div className="space-y-2">
-          <p className="text-white/60 font-medium">AI生成的神兽将在这里显示</p>
-          <p className="text-white/40 text-sm">输入描述开始创作你的专属神兽</p>
+          <p className="text-white/60 font-medium">AI-generated mythical beast will appear here</p>
+          <p className="text-white/40 text-sm">Enter a description to start creating your unique beast</p>
         </div>
       </div>
     </div>
   );
 
-  // 错误状态组件
+  // Error state component
   const ErrorState = () => (
     <div className="aspect-square bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center">
       <div className="text-center space-y-4 p-8">
@@ -92,20 +92,20 @@ export function AIPreview({
           <ImageIcon className="h-8 w-8 text-red-400" />
         </div>
         <div className="space-y-2">
-          <p className="text-red-400 font-medium">生成失败</p>
-          <p className="text-red-300/80 text-sm">{error || '请重试或联系支持'}</p>
+          <p className="text-red-400 font-medium">Generation Failed</p>
+          <p className="text-red-300/80 text-sm">{error || 'Please try again or contact support'}</p>
         </div>
         {onRegenerate && (
           <Button onClick={onRegenerate} size="sm" variant="outline">
             <RotateCcw className="mr-2 h-4 w-4" />
-            重新生成
+            Regenerate
           </Button>
         )}
       </div>
     </div>
   );
 
-  // 图片预览组件
+  // Image preview component
   const ImagePreview = () => (
     <div className="relative group">
       <div className="aspect-square relative overflow-hidden rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10">
@@ -120,14 +120,14 @@ export function AIPreview({
           onError={() => setImageError(true)}
         />
         
-        {/* 加载遮罩 */}
+        {/* Loading overlay */}
         {!imageLoaded && !imageError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <Loader2 className="h-8 w-8 text-white animate-spin" />
           </div>
         )}
 
-        {/* 样式标签 */}
+        {/* Style tag */}
         <Badge 
           className={cn(
             "absolute top-3 left-3 transition-opacity",
@@ -137,17 +137,17 @@ export function AIPreview({
           {styleInfo.name}
         </Badge>
 
-        {/* AI标识 */}
+        {/* AI identifier */}
         <Badge className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-pink-500">
           <Sparkles className="mr-1 h-3 w-3" />
-          AI生成
+          AI Generated
         </Badge>
 
-        {/* 操作按钮遮罩 */}
+        {/* Action buttons overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="flex gap-2">
-              {/* 放大查看 */}
+              {/* Zoom view */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="secondary" className="bg-white/20 backdrop-blur-sm">
@@ -165,7 +165,7 @@ export function AIPreview({
                 </DialogContent>
               </Dialog>
 
-              {/* 下载 */}
+              {/* Download */}
               {onDownload && (
                 <Button 
                   size="sm" 
@@ -177,7 +177,7 @@ export function AIPreview({
                 </Button>
               )}
 
-              {/* 分享 */}
+              {/* Share */}
               {onShare && (
                 <Button 
                   size="sm" 
@@ -193,7 +193,7 @@ export function AIPreview({
         </div>
       </div>
 
-      {/* 底部操作栏 */}
+      {/* Bottom action bar */}
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-white/70 border-white/20">
@@ -201,7 +201,7 @@ export function AIPreview({
             1024x1024
           </Badge>
           <Badge variant="outline" className="text-white/70 border-white/20">
-            PNG格式
+            PNG Format
           </Badge>
         </div>
 
@@ -209,13 +209,13 @@ export function AIPreview({
           {onDownload && (
             <Button size="sm" variant="ghost" onClick={onDownload}>
               <Download className="mr-1 h-3 w-3" />
-              下载
+              Download
             </Button>
           )}
           {onRegenerate && (
             <Button size="sm" variant="ghost" onClick={onRegenerate}>
               <RotateCcw className="mr-1 h-3 w-3" />
-              重新生成
+              Regenerate
             </Button>
           )}
         </div>
@@ -227,20 +227,20 @@ export function AIPreview({
     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
       <CardContent className="p-6">
         <div className="space-y-4">
-          {/* 标题 */}
+          {/* Title */}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              AI创作预览
+              AI Creation Preview
             </h3>
             {imageUrl && (
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                生成完成
+                Generation Complete
               </Badge>
             )}
           </div>
 
-          {/* 内容区域 */}
+          {/* Content area */}
           <div>
             {isLoading ? (
               <LoadingState />
@@ -255,14 +255,14 @@ export function AIPreview({
             )}
           </div>
 
-          {/* 提示信息 */}
+          {/* Tip information */}
           <div className="text-xs text-white/60 space-y-1">
             <div className="flex items-center gap-2">
               <Sparkles className="h-3 w-3" />
-              <span>由智谱AI CogView-3模型生成</span>
+              <span>Generated by ZhipuAI CogView-3 model</span>
             </div>
-            <div>🎨 当前风格：{styleInfo.name} - {styleInfo.description}</div>
-            <div>⚡ 生成的图片将作为NFT的封面图片永久保存</div>
+            <div>🎨 Current Style: {styleInfo.name} - {styleInfo.description}</div>
+            <div>⚡ The generated image will be permanently saved as the NFT's cover image</div>
           </div>
         </div>
       </CardContent>

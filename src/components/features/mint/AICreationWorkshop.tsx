@@ -30,48 +30,48 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
   const styles = [
     {
       value: 'classic' as ArtStyle,
-      name: '古典水墨',
-      description: '传统山海经风格，水墨画意境',
+      name: 'Classical Ink',
+      description: 'Traditional Shan Hai Jing style with ink painting aesthetics',
       emoji: '🖌️',
       gradient: 'from-slate-600 to-slate-800'
     },
     {
       value: 'modern' as ArtStyle,
-      name: '现代插画',
-      description: '现代艺术风格，鲜艳色彩',
+      name: 'Modern Illustration',
+      description: 'Contemporary art style with vibrant colors',
       emoji: '🎨',
       gradient: 'from-blue-600 to-purple-800'
     },
     {
       value: 'fantasy' as ArtStyle,
-      name: '奇幻艺术',
-      description: '魔幻仙侠风格，梦幻光效',
+      name: 'Fantasy Art',
+      description: 'Magical fantasy style with dreamlike effects',
       emoji: '✨',
       gradient: 'from-purple-600 to-pink-800'
     },
     {
       value: 'ink' as ArtStyle,
-      name: '水墨写意',
-      description: '中国水墨画风，写意笔触',
+      name: 'Ink Painting',
+      description: 'Chinese ink wash painting with expressive brushstrokes',
       emoji: '🖋️',
       gradient: 'from-gray-600 to-black'
     }
   ];
 
   const inspirationTemplates = [
-    '威武的金色神龙翱翔云海之间',
-    '神秘的九尾狐仙月下起舞',
-    '巨大的鲲鹏展翅遮天蔽日',
-    '威严的白虎踏雪无痕',
-    '火焰神兽，全身燃烧着烈火',
-    '冰霜神兽，身披寒冰铠甲',
-    '机械朋克风格的钢铁神龙',
-    '星空图案的宇宙神兽'
+    'Majestic golden dragon soaring through clouds',
+    'Mysterious nine-tailed fox dancing under the moon',
+    'Giant Kunpeng spreading wings to cover the sky',
+    'Mighty white tiger walking on snow without leaving traces',
+    'Fire beast with body engulfed in flames',
+    'Frost beast wearing armor of ice',
+    'Steampunk-style mechanical steel dragon',
+    'Cosmic beast with starry patterns'
   ];
 
   const handleOptimizePrompt = async () => {
     if (!userInput.trim()) {
-      alert('请先输入神兽描述！');
+      alert('Please enter a beast description first!');
       return;
     }
 
@@ -91,11 +91,11 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
       if (result.success) {
         setOptimizedPrompt(result.optimizedPrompt);
       } else {
-        throw new Error(result.error || '优化失败');
+        throw new Error(result.error || 'Optimization failed');
       }
     } catch (error) {
-      console.error('提示词优化失败:', error);
-      alert('提示词优化失败，将使用原始输入');
+      console.error('Prompt optimization failed:', error);
+      alert('Prompt optimization failed, will use original input');
       setOptimizedPrompt(userInput);
     } finally {
       setIsOptimizing(false);
@@ -106,7 +106,7 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
     const finalPrompt = optimizedPrompt || userInput;
     
     if (!finalPrompt.trim()) {
-      alert('请先输入神兽描述！');
+      alert('Please enter a beast description first!');
       return;
     }
 
@@ -136,11 +136,11 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
         setGenerationResult(generationData);
         onImageGenerated?.(generationData);
       } else {
-        throw new Error(result.error || '生成失败');
+        throw new Error(result.error || 'Generation failed');
       }
     } catch (error) {
-      console.error('图片生成失败:', error);
-      alert('图片生成失败，请重试');
+      console.error('Image generation failed:', error);
+      alert('Image generation failed, please try again');
     } finally {
       setIsGenerating(false);
     }
@@ -154,21 +154,21 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* 标题 */}
+      {/* Title */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
           <span className="text-2xl">🎨</span>
-          AI神兽创作工坊
+          AI Mythical Beast Workshop
         </h1>
-        <p className="text-white/70">用AI技术重新演绎千年神话</p>
+        <p className="text-white/70">Reimagining ancient myths with AI technology</p>
       </div>
 
-      {/* 输入区域 */}
+      {/* Input Area */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <span className="text-xl">💭</span>
-            描述你心中的神兽
+            Describe Your Vision
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -176,20 +176,20 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
             <textarea
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="例如：威武的金色神龙，龙鳞如熔岩般赤红，双目似星火燃烧..."
+              placeholder="e.g., Majestic golden dragon with scales like molten lava, eyes burning like starfire..."
               rows={4}
               maxLength={500}
               className="w-full min-h-[100px] resize-none bg-white/5 border border-white/20 rounded-lg p-3 text-white placeholder:text-white/50 focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
             />
             <div className="flex justify-between items-center text-xs text-white/50">
-              <span>💡 描述越详细，AI生成的效果越精准</span>
+              <span>💡 The more detailed your description, the more precise the AI generation</span>
               <span>{userInput.length}/500</span>
             </div>
           </div>
 
-          {/* 灵感模板 */}
+          {/* Inspiration Templates */}
           <div className="space-y-2">
-            <div className="text-sm text-white/70">✨ 灵感模板：</div>
+            <div className="text-sm text-white/70">✨ Inspiration Templates:</div>
             <div className="flex flex-wrap gap-2">
               {inspirationTemplates.map((template, index) => (
                 <button
@@ -205,12 +205,12 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
         </CardContent>
       </Card>
 
-      {/* 风格选择 */}
+      {/* Style Selection */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <span className="text-xl">🎭</span>
-            选择艺术风格
+            Choose Art Style
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -243,11 +243,11 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
         </CardContent>
       </Card>
 
-      {/* AI工作流程 */}
+      {/* AI Workflow */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* 步骤1：优化提示词 */}
+            {/* Step 1: Optimize Prompt */}
             <div className="flex-1">
               <Button
                 onClick={handleOptimizePrompt}
@@ -257,12 +257,12 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
                 {isOptimizing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                    DeepSeek优化中...
+                    DeepSeek Optimizing...
                   </>
                 ) : (
                   <>
                     <span className="mr-2">🧠</span>
-                    DeepSeek优化提示词
+                    DeepSeek Prompt Optimization
                   </>
                 )}
               </Button>
@@ -272,7 +272,7 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
               <span className="text-2xl">→</span>
             </div>
 
-            {/* 步骤2：生成图片 */}
+            {/* Step 2: Generate Image */}
             <div className="flex-1">
               <Button
                 onClick={handleGenerateImage}
@@ -282,37 +282,37 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
                 {isGenerating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                    智谱AI生成中...
+                    ZhipuAI Generating...
                   </>
                 ) : (
                   <>
                     <span className="mr-2">🎨</span>
-                    智谱AI生成图片
+                    ZhipuAI Image Generation
                   </>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* 优化后的提示词显示 */}
+          {/* Optimized Prompt Display */}
           {optimizedPrompt && (
             <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <div className="text-sm text-blue-400 mb-2">🧠 DeepSeek优化结果：</div>
+              <div className="text-sm text-blue-400 mb-2">🧠 DeepSeek Optimization Result:</div>
               <div className="text-white/90 text-sm">{optimizedPrompt}</div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 生成结果 */}
+      {/* Generation Result */}
       {generationResult && (
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <span className="text-xl">🖼️</span>
-              AI创作结果
+              AI Creation Result
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                生成成功
+                Generation Successful
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -320,32 +320,32 @@ export function AICreationWorkshop({ onImageGenerated }: AICreationWorkshopProps
             <div className="aspect-square relative overflow-hidden rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
               <img
                 src={generationResult.imageUrl}
-                alt="AI生成的神兽"
+                alt="AI Generated Mythical Beast"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/500x500/7c3aed/ffffff?text=生成中...';
+                  e.currentTarget.src = 'https://via.placeholder.com/500x500/7c3aed/ffffff?text=Generating...';
                 }}
               />
               
-              {/* 风格标签 */}
+              {/* Style Tag */}
               <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500">
                 {styles.find(s => s.value === generationResult.style)?.name}
               </Badge>
 
-              {/* 来源标签 */}
+              {/* Source Tag */}
               <Badge className="absolute top-3 right-3 bg-blue-500/20 text-blue-400 border-blue-500/30">
-                {generationResult.source === 'zhipu' ? '智谱AI' : '预览模式'}
+                {generationResult.source === 'zhipu' ? 'ZhipuAI' : 'Preview Mode'}
               </Badge>
             </div>
 
             <div className="space-y-2 text-sm">
               <div>
-                <span className="text-white/60">原始描述：</span>
-                <span className="text-white">{generationResult.originalInput}</span>
+                <span className="text-white/60">Original Description:</span>
+                <span className="text-white ml-2">{generationResult.originalInput}</span>
               </div>
               <div>
-                <span className="text-white/60">优化后：</span>
-                <span className="text-white">{generationResult.optimizedPrompt}</span>
+                <span className="text-white/60">Optimized:</span>
+                <span className="text-white ml-2">{generationResult.optimizedPrompt}</span>
               </div>
             </div>
           </CardContent>

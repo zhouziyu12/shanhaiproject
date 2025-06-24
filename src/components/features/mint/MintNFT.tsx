@@ -45,8 +45,8 @@ export function MintNFT() {
   const [mintResult, setMintResult] = useState<MintSuccessResult | null>(null);
   const [finalRarity, setFinalRarity] = useState<RarityLevel | null>(null);
 
-  // 调试输出当前状态
-  console.log('🎯 MintNFT组件状态:', {
+  // Debug output current state
+  console.log('🎯 MintNFT component state:', {
     currentStep,
     hasGeneration: !!generationResult,
     hasMintResult: !!mintResult,
@@ -57,7 +57,7 @@ export function MintNFT() {
   if (!mounted) {
     return (
       <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-white">加载中...</div>
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
@@ -67,8 +67,8 @@ export function MintNFT() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center space-y-8 py-12">
           <div className="text-6xl mb-4">🔐</div>
-          <h1 className="text-3xl font-bold text-white">连接钱包开始创作</h1>
-          <p className="text-white/70">请先连接您的钱包，然后开始AI神兽创作之旅</p>
+          <h1 className="text-3xl font-bold text-white">Connect Wallet to Start Creating</h1>
+          <p className="text-white/70">Please connect your wallet to begin your AI mythical beast creation journey</p>
           <ConnectWallet />
         </div>
       </div>
@@ -76,19 +76,19 @@ export function MintNFT() {
   }
 
   const handleImageGenerated = (result: GenerationResult) => {
-    console.log('🎨 图片生成完成:', result);
+    console.log('🎨 Image generation complete:', result);
     setGenerationResult(result);
     setCurrentStep('confirm');
   };
 
   const handleMintSuccess = (result: MintSuccessResult) => {
-    console.log('⛏️ 铸造成功，准备跳转到稀有度揭晓:', result);
+    console.log('⛏️ Mint successful, preparing to jump to rarity reveal:', result);
     setMintResult(result);
     setCurrentStep('reveal');
   };
 
   const handleRarityReveal = (rarity: RarityLevel) => {
-    console.log('⭐ 稀有度揭晓完成:', rarity);
+    console.log('⭐ Rarity reveal complete:', rarity);
     setFinalRarity(rarity);
     setCurrentStep('success');
   };
@@ -112,14 +112,14 @@ export function MintNFT() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* 步骤指示器 */}
+      {/* Step Indicator */}
       <div className="max-w-5xl mx-auto mb-8">
         <div className="flex items-center justify-center space-x-2 md:space-x-4">
           <div className={`flex items-center gap-2 ${currentStep === 'create' ? 'text-purple-400' : (currentStep === 'confirm' || currentStep === 'reveal' || currentStep === 'success') ? 'text-green-400' : 'text-white/50'}`}>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'create' ? 'border-purple-400 bg-purple-400/20' : (currentStep === 'confirm' || currentStep === 'reveal' || currentStep === 'success') ? 'border-green-400 bg-green-400/20' : 'border-white/30'}`}>
               {(currentStep === 'confirm' || currentStep === 'reveal' || currentStep === 'success') ? '✓' : '1'}
             </div>
-            <span className="hidden sm:inline text-sm">AI创作</span>
+            <span className="hidden sm:inline text-sm">AI Creation</span>
           </div>
           
           <div className="w-4 md:w-8 h-0.5 bg-white/30"></div>
@@ -128,7 +128,7 @@ export function MintNFT() {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'confirm' ? 'border-purple-400 bg-purple-400/20' : (currentStep === 'reveal' || currentStep === 'success') ? 'border-green-400 bg-green-400/20' : 'border-white/30'}`}>
               {(currentStep === 'reveal' || currentStep === 'success') ? '✓' : '2'}
             </div>
-            <span className="hidden sm:inline text-sm">确认铸造</span>
+            <span className="hidden sm:inline text-sm">Confirm Mint</span>
           </div>
           
           <div className="w-4 md:w-8 h-0.5 bg-white/30"></div>
@@ -137,7 +137,7 @@ export function MintNFT() {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'reveal' ? 'border-purple-400 bg-purple-400/20' : currentStep === 'success' ? 'border-green-400 bg-green-400/20' : 'border-white/30'}`}>
               {currentStep === 'success' ? '✓' : '3'}
             </div>
-            <span className="hidden sm:inline text-sm">稀有度揭晓</span>
+            <span className="hidden sm:inline text-sm">Rarity Reveal</span>
           </div>
           
           <div className="w-4 md:w-8 h-0.5 bg-white/30"></div>
@@ -146,25 +146,25 @@ export function MintNFT() {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'success' ? 'border-green-400 bg-green-400/20' : 'border-white/30'}`}>
               {currentStep === 'success' ? '✓' : '4'}
             </div>
-            <span className="hidden sm:inline text-sm">完成</span>
+            <span className="hidden sm:inline text-sm">Complete</span>
           </div>
         </div>
       </div>
 
-      {/* 调试信息显示 */}
+      {/* Debug Information Display */}
       <div className="max-w-5xl mx-auto mb-4">
         <div className="bg-black/30 border border-white/20 rounded-lg p-3">
           <div className="text-xs text-white/70 space-y-1">
-            <div>🐛 当前步骤: {currentStep}</div>
-            <div>🎨 生成结果: {generationResult ? '✓' : '✗'}</div>
-            <div>⛏️ 铸造结果: {mintResult ? `✓ Token ID: ${mintResult.tokenId}` : '✗'}</div>
-            <div>🎲 VRF请求: {mintResult?.vrfRequestId || '无'}</div>
-            <div>⭐ 最终稀有度: {finalRarity !== null ? finalRarity : '未揭晓'}</div>
+            <div>🐛 Current Step: {currentStep}</div>
+            <div>🎨 Generation Result: {generationResult ? '✓' : '✗'}</div>
+            <div>⛏️ Mint Result: {mintResult ? `✓ Token ID: ${mintResult.tokenId}` : '✗'}</div>
+            <div>🎲 VRF Request: {mintResult?.vrfRequestId || 'None'}</div>
+            <div>⭐ Final Rarity: {finalRarity !== null ? finalRarity : 'Not Revealed'}</div>
           </div>
         </div>
       </div>
 
-      {/* 步骤内容 */}
+      {/* Step Content */}
       {currentStep === 'create' && (
         <AICreationWorkshop onImageGenerated={handleImageGenerated} />
       )}
@@ -180,7 +180,7 @@ export function MintNFT() {
       {currentStep === 'reveal' && mintResult && (
         <div>
           <div className="text-center mb-4">
-            <div className="text-green-400 font-bold">🎯 RarityReveal组件即将渲染</div>
+            <div className="text-green-400 font-bold">🎯 RarityReveal component about to render</div>
             <div className="text-white/70 text-sm">Token ID: {mintResult.tokenId}, VRF: {mintResult.vrfRequestId}</div>
           </div>
           <RarityReveal
@@ -197,25 +197,25 @@ export function MintNFT() {
         <div className="w-full max-w-4xl mx-auto">
           <div className="text-center space-y-8 py-12">
             <div className="text-8xl mb-4">🎉</div>
-            <h1 className="text-4xl font-bold text-green-400">神兽创作完成！</h1>
+            <h1 className="text-4xl font-bold text-green-400">Mythical Beast Creation Complete!</h1>
             <div className="space-y-6">
               <p className="text-xl text-white/80">
-                恭喜！您的AI神兽已成功铸造为NFT，并获得了稀有度！
+                Congratulations! Your AI mythical beast has been successfully minted as an NFT and assigned a rarity!
               </p>
               
-              {/* 最终神兽展示 */}
+              {/* Final Beast Display */}
               <div className="max-w-md mx-auto bg-white/10 border border-white/20 rounded-lg p-6">
                 <div className="aspect-square relative overflow-hidden rounded-lg mb-4">
                   <img
                     src={mintResult.generationData.imageUrl}
-                    alt="最终神兽"
+                    alt="Final Mythical Beast"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 
                 <div className="space-y-3">
                   <div className="text-white font-bold text-lg">
-                    山海神兽 #{mintResult.tokenId}
+                    Shan Hai Beast #{mintResult.tokenId}
                   </div>
                   
                   <div className="flex justify-center">
@@ -226,38 +226,38 @@ export function MintNFT() {
                       finalRarity === 1 ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                       'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                     }`}>
-                      {finalRarity === 4 ? '🌟 神话' :
-                       finalRarity === 3 ? '⭐ 传说' :
-                       finalRarity === 2 ? '💜 史诗' :
-                       finalRarity === 1 ? '💙 稀有' :
-                       '⚪ 普通'}
+                      {finalRarity === 4 ? '🌟 Mythical' :
+                       finalRarity === 3 ? '⭐ Legendary' :
+                       finalRarity === 2 ? '💜 Epic' :
+                       finalRarity === 1 ? '💙 Rare' :
+                       '⚪ Common'}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 技术成果展示 */}
+              {/* Technical Achievement Display */}
               <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg p-6 max-w-2xl mx-auto">
-                <h3 className="text-green-400 font-bold mb-4">🏆 技术成果</h3>
+                <h3 className="text-green-400 font-bold mb-4">🏆 Technical Achievement</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-2">
-                    <div className="text-green-300">🤖 AI技术：DeepSeek + 智谱AI</div>
-                    <div className="text-green-300">🔗 区块链：以太坊NFT</div>
-                    <div className="text-green-300">📦 存储：Pinata IPFS</div>
+                    <div className="text-green-300">🤖 AI Technology: DeepSeek + ZhipuAI</div>
+                    <div className="text-green-300">🔗 Blockchain: Ethereum NFT</div>
+                    <div className="text-green-300">📦 Storage: Pinata IPFS</div>
                   </div>
                   <div className="space-y-2">
-                    <div className="text-green-300">🎲 随机性：Chainlink VRF</div>
-                    <div className="text-green-300">🆔 Token ID：#{mintResult.tokenId}</div>
-                    <div className="text-green-300">⭐ 稀有度：{finalRarity}</div>
+                    <div className="text-green-300">🎲 Randomness: Chainlink VRF</div>
+                    <div className="text-green-300">🆔 Token ID: #{mintResult.tokenId}</div>
+                    <div className="text-green-300">⭐ Rarity: {finalRarity}</div>
                   </div>
                 </div>
               </div>
 
-              {/* 图鉴提示 */}
+              {/* Gallery Update Notice */}
               <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 max-w-2xl mx-auto">
-                <div className="text-purple-400 text-sm font-medium mb-2">📚 图鉴更新</div>
+                <div className="text-purple-400 text-sm font-medium mb-2">📚 Gallery Update</div>
                 <div className="text-purple-300/80 text-sm">
-                  您的神兽应该已经自动添加到图鉴中了，快去查看您的收藏吧！
+                  Your mythical beast should have been automatically added to your gallery. Go check out your collection!
                 </div>
               </div>
             </div>
@@ -267,27 +267,27 @@ export function MintNFT() {
                 onClick={handleCreateNew}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-lg transition-all"
               >
-                创造新神兽
+                Create New Beast
               </button>
               <button
                 onClick={() => window.open('/gallery', '_blank')}
                 className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg transition-all"
               >
-                查看我的图鉴
+                View My Gallery
               </button>
               <button
                 onClick={() => {
-                  const shareText = `我在神图计划创造了一只${finalRarity === 4 ? '神话' : finalRarity === 3 ? '传说' : finalRarity === 2 ? '史诗' : finalRarity === 1 ? '稀有' : '普通'}级别的山海神兽NFT！#神图计划 #ShanHaiVerse #ChainlinkVRF`;
+                  const shareText = `I created a ${finalRarity === 4 ? 'Mythical' : finalRarity === 3 ? 'Legendary' : finalRarity === 2 ? 'Epic' : finalRarity === 1 ? 'Rare' : 'Common'}-tier Shan Hai mythical beast NFT in the Divine Image Project! #DivineImageProject #ShanHaiVerse #ChainlinkVRF`;
                   if (navigator.share) {
                     navigator.share({ text: shareText });
                   } else {
                     navigator.clipboard.writeText(shareText);
-                    alert('分享内容已复制到剪贴板！');
+                    alert('Share content copied to clipboard!');
                   }
                 }}
                 className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-6 py-3 rounded-lg transition-all"
               >
-                分享成果
+                Share Achievement
               </button>
             </div>
           </div>

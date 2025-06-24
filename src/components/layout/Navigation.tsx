@@ -19,11 +19,11 @@ export function Navigation() {
   }, []);
 
   const navItems = [
-    { name: '首页', href: '/', icon: '◆' },
-    { name: '创作', href: '/mint', icon: '✦' },
-    { name: '图鉴', href: '/gallery', icon: '◇' },
-    { name: '探索', href: '/explore', icon: '◈' },
-    { name: '代币', href: '/token', icon: '◉' },
+    { name: 'Home', href: '/', icon: '◆' },
+    { name: 'Create', href: '/mint', icon: '✦' },
+    { name: 'Gallery', href: '/gallery', icon: '◇' },
+    { name: 'Explore', href: '/explore', icon: '◈' },
+    { name: 'Token', href: '/token', icon: '◉' },
   ];
 
   return (
@@ -38,16 +38,16 @@ export function Navigation() {
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3 group">
               <div className="relative">
-                {/* Logo图标 */}
+                {/* Logo icon */}
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-white font-bold text-lg">神</span>
+                  <span className="text-white font-bold text-lg">D</span>
                 </div>
-                {/* 光效 */}
+                {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"></div>
               </div>
               <div className="hidden sm:block">
                 <div className="text-xl font-light text-white group-hover:text-blue-400 transition-colors duration-300">
-                  神图计划
+                  Divine Image Project
                 </div>
                 <div className="text-xs text-gray-400 uppercase tracking-wider">
                   ShanHaiVerse
@@ -67,7 +67,7 @@ export function Navigation() {
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {/* 背景光效 */}
+                  {/* Background glow effect */}
                   {pathname === item.href && (
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full"></div>
                   )}
@@ -79,13 +79,13 @@ export function Navigation() {
                   </span>
                   <span className="relative z-10 font-medium">{item.name}</span>
                   
-                  {/* 悬停效果 */}
+                  {/* Hover effect */}
                   <div className="absolute inset-0 bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300"></div>
                 </Link>
               ))}
             </div>
 
-            {/* 桌面端钱包连接 */}
+            {/* Desktop wallet connection */}
             <div className="hidden lg:block">
               <ConnectWallet />
             </div>
@@ -115,18 +115,18 @@ export function Navigation() {
       <div className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
         mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
       }`}>
-        {/* 背景遮罩 */}
+        {/* Background overlay */}
         <div 
           className="absolute inset-0 bg-black/80 backdrop-blur-xl"
           onClick={() => setMobileMenuOpen(false)}
         />
         
-        {/* 菜单内容 */}
+        {/* Menu content */}
         <div className={`absolute top-0 right-0 w-80 h-full bg-black/90 backdrop-blur-xl border-l border-white/10 transform transition-transform duration-300 ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}>
           <div className="p-6 pt-24">
-            {/* 移动端导航链接 */}
+            {/* Mobile navigation links */}
             <div className="space-y-4 mb-8">
               {navItems.map((item, index) => (
                 <Link
@@ -154,12 +154,12 @@ export function Navigation() {
               ))}
             </div>
 
-            {/* 移动端钱包连接 */}
+            {/* Mobile wallet connection */}
             <div className="pt-6 border-t border-white/10">
               <ConnectWallet />
             </div>
 
-            {/* 装饰性元素 */}
+            {/* Decorative elements */}
             <div className="absolute bottom-6 left-6 right-6">
               <div className="text-center text-gray-500 text-sm">
                 <div>Next Generation</div>
@@ -170,7 +170,7 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* 占位空间 */}
+      {/* Spacer */}
       <div className="h-20"></div>
     </>
   );

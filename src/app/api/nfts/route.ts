@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get('address');
   
-  console.log('🔍 API: 获取NFT数据，地址:', address);
+  console.log('🔍 API: Fetching NFT data, address:', address);
   
   if (!address) {
     return NextResponse.json({ error: 'Address required' }, { status: 400 });
@@ -17,16 +17,16 @@ export async function GET(request: NextRequest) {
       orderBy: { mintedAt: 'desc' }
     });
 
-    // 转换BigInt为字符串以便JSON序列化
+    // Convert BigInt to string for JSON serialization
     const serializedNFTs = nfts.map(nft => ({
       ...nft,
       tokenId: nft.tokenId.toString()
     }));
 
-    console.log('✅ API: 成功获取NFT数据:', serializedNFTs.length, '个');
+    console.log('✅ API: Successfully fetched NFT data:', serializedNFTs.length, 'items');
     return NextResponse.json({ success: true, nfts: serializedNFTs });
   } catch (error) {
-    console.error('❌ API: 获取NFT失败:', error);
+    console.error('❌ API: Failed to fetch NFTs:', error);
     return NextResponse.json({ error: 'Failed to fetch NFTs' }, { status: 500 });
   }
 }
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('🆕 API: 添加新NFT:', body);
+    console.log('🆕 API: Adding new NFT:', body);
     
     const {
       tokenId,
@@ -52,23 +52,23 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const creatorAddress = creator.toLowerCase();
-    console.log('👤 准备处理NFT，用户:', creatorAddress);
+    console.log('👤 Preparing to process NFT, user:', creatorAddress);
 
-    // 确保tokenId是BigInt
+    // Ensure tokenId is BigInt
     const tokenIdBigInt = BigInt(tokenId);
 
-    // 先确保用户记录存在
+    // First ensure user record exists
     await prisma.user.upsert({
       where: { address: creatorAddress },
       update: { updatedAt: new Date() },
       create: { address: creatorAddress }
     });
 
-    // 🔧 修复：使用原子upsert操作，避免并发竞争
+    // 🔧 Fix: Use atomic upsert operation to avoid race conditions
     const result = await prisma.nFT.upsert({
       where: { tokenId: tokenIdBigInt },
       update: {
-        // 如果NFT已存在，更新这些字段
+        // If NFT already exists, update these fields
         name,
         originalInput,
         optimizedPrompt,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date()
       },
       create: {
-        // 如果NFT不存在，创建新记录
+        // If NFT doesn't exist, create new record
         tokenId: tokenIdBigInt,
         name,
         originalInput,
@@ -102,16 +102,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 转换BigInt为字符串
+    // Convert BigInt to string
     const serializedResult = {
       ...result,
       tokenId: result.tokenId.toString()
     };
 
-    // 判断是创建还是更新（通过检查mintedAt和updatedAt是否相同）
+    // Determine if it's create or update (by checking if mintedAt and updatedAt are the same)
     const action = result.mintedAt.getTime() === result.updatedAt.getTime() ? 'created' : 'updated';
     
-    console.log(`✅ API: NFT${action === 'created' ? '创建' : '更新'}成功:`, {
+    console.log(`✅ API: NFT ${action} successfully:`, {
       tokenId: tokenId,
       action: action,
       name: name
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ API: 处理NFT失败:', error);
+    console.error('❌ API: Failed to process NFT:', error);
     return NextResponse.json({ 
       error: 'Failed to process NFT', 
       details: error.message
@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest) {
       take: 50
     });
     
-    // 转换BigInt为字符串
+    // Convert BigInt to string
     const serializedNFTs = nfts.map(nft => ({
       ...nft,
       tokenId: nft.tokenId.toString()
@@ -147,7 +147,7 @@ export async function PUT(request: NextRequest) {
     
     return NextResponse.json({ success: true, nfts: serializedNFTs });
   } catch (error) {
-    console.error('❌ API: 获取所有NFT失败:', error);
+    console.error('❌ API: Failed to fetch all NFTs:', error);
     return NextResponse.json({ error: 'Failed to fetch all NFTs' }, { status: 500 });
   }
 }
