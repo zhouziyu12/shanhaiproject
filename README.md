@@ -17,7 +17,7 @@ Connect your MetaMask wallet to Sepolia Testnet and start creating your AI-gener
 
 ## 🎯 Chromion Hackathon Submission
 
-This project is submitted for the **Chromion: A Chainlink Hackathon** (May 30 - June 29, 2024), showcasing innovative use cases that combine **DeFi**, **Tokenized Assets**, and **AI**.
+This project is submitted for the **Chromion: A Chainlink Hackathon** (May 30 - June 29, 2025), showcasing innovative use cases that combine **DeFi**, **Tokenized Assets**, and **AI**.
 
 ### 🏆 Hackathon Compliance
 
