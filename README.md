@@ -93,7 +93,7 @@ Our smart contracts use **Chainlink VRF v2.5** to ensure provably fair rarity as
 
 ### Blockchain
 - **Ethereum Sepolia** - Testnet deployment
-- **Chainlink VRF v2** - Verifiable randomness
+- **Chainlink VRF v2.5** - Verifiable randomness
 - **Solidity Smart Contracts** - NFT + VRF implementation
 - **MetaMask Integration** - Wallet connectivity
 
