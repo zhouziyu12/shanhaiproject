@@ -48,7 +48,7 @@ This project is submitted for the **Chromion: A Chainlink Hackathon** (May 30 - 
 
 ### Core VRF Implementation
 
-Our smart contracts use **Chainlink VRF v2** to ensure provably fair rarity assignment:
+Our smart contracts use **Chainlink VRF v2.5** to ensure provably fair rarity assignment:
 
 ```solidity
 // Key files using Chainlink:
